@@ -7,8 +7,16 @@ Projet final de C à ESGI
 1. Project Description
 2. Pre-requisites
 
+    - Windows OS (for Makefile to work properly)
     - gcc
+    - mingw32-make.exe
 3. Installation
+
+    ```shell
+    mingw32-make clean
+    mingw32-make
+    ./MiniDB.exe
+    ```
 
 4. Features
 
@@ -47,7 +55,9 @@ Projet final de C à ESGI
     - `insert into tab1 ( col1, col2 ) values ( val1, val2 )`
     - `select ( col1, col2, col3 )/* from tab1 [join tab2 on col1 = col2] [where col1 = xyz]`, order of col1 and col2 in JOIN clause matters, col1 and col2 correspond to tab1 and tab2 respectively
 
-6. Contributors
+6. Technical choice clarification
+
+7. Contributors
 
     - Minh Cat DO
     - Paco ROBINET-CAMPOY
@@ -100,6 +110,6 @@ delete from customers where id = 3;
 
 drop table customers, orders;
 
-**Ideas to improve**
+**Ideas to improve (if time allows)**
     - Select col AS abc (if not too complicated)
     - Default constraint

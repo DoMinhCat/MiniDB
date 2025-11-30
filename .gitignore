@@ -1,7 +1,6 @@
 .vscode
 *.exe
 *.txt
-sandbox.c
 *.out
 /dataSources/
 /dataSources.local.xml
@@ -10,4 +9,5 @@ sandbox.c
 /workspace.xml
 .idea
 *.bin
+/build/
 *.o
