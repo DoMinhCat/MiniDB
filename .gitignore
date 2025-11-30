@@ -10,3 +10,4 @@ sandbox.c
 /workspace.xml
 .idea
 *.bin
+*.o
