@@ -47,7 +47,7 @@ NOTE: import structure for table to fwrite in order:
         write 67 buckets one by one:
             Loop to count then write num of nodes that handle collision
             write each collision node:
-                IMPORTANT: for prev_row and row, write the row position (int) from first row (first row=1), not the pointer value. So if prev_row_index=0 => prev_row=NULL
+                IMPORTANT: for prev_row and row, write the row position (int) from first row (first row=0), not the pointer value. So if prev_row_index=0 => prev_row=first row
                 strlen of original_value and original_value (str)
 */ 
 #include <stdio.h>
@@ -57,6 +57,8 @@ NOTE: import structure for table to fwrite in order:
 
 #include "../db/db.h"
 #include "../../include/ini.h"
+#include "../../include/clean.h"
+#include "../../include/global.h"
 
 bool read_succeed(int read, int count, char* import_name){
     if(read != count){
@@ -203,7 +205,7 @@ void free_for_import_row(int*** int_list, int int_count, double*** double_list, 
     }
 }
 
-bool import_row(FILE* import_file, char* import_name,Table* table, Row** last_row){
+bool import_row(FILE* import_file, char* import_name, Table* table, Row** last_row){
     int read;
     int int_count;
     int double_count;
@@ -310,6 +312,128 @@ bool import_row(FILE* import_file, char* import_name,Table* table, Row** last_ro
     return true;
 }
 
+bool import_hash_node(FILE* import_file, char* import_name, Table* table, HashTable* ht, int key){
+    int read;
+    int prev_row_index;
+    int row_index;
+    int len_val;
+    char* val = NULL;
+    Node* new_node = NULL;
+    int i;
+    Row* current_row = NULL;
+
+    // prev row index
+    read = fread(&prev_row_index, sizeof(int), 1, import_file);
+    if(!read_succeed(read, 1, import_name)) return false; 
+    // row index
+    read = fread(&row_index, sizeof(int), 1, import_file);
+    if(!read_succeed(read, 1, import_name)) return false; 
+
+    // original val len
+    read = fread(&len_val, sizeof(int), 1, import_file);
+    if(!read_succeed(read, 1, import_name)) return false; 
+    // original val
+    read = fread(&val, sizeof(int), len_val, import_file);
+    if(!read_succeed(read, len_val, import_name)) {
+        free(val);
+        val = NULL;
+        return false;
+    }
+
+    // init and set hash node
+    new_node = init_node();
+
+    // prev row and row (first_row index = 0 when export)
+    if(prev_row_index==-1){
+        new_node->prev_row = NULL;
+        new_node->row = table->first_row;
+    }
+    else{
+        current_row = table->first_row;
+        for (i = 0; i < prev_row_index; i++) {
+            current_row = current_row->next_row;
+        }
+        new_node->prev_row = current_row;
+        new_node->row = current_row->next_row;
+    }
+
+    // set pointer of node
+    if(!ht->bucket[key]){
+        ht->bucket[key] = new_node;
+    }else{
+        // insert at head
+        new_node->next_node = ht->bucket[key];
+        ht->bucket[key] = new_node;
+    }
+
+    // original val
+    new_node->original_value = strdup(val);
+    assert(new_node->original_value!=NULL);
+
+    free(val);
+    val = NULL;
+    return true;
+}
+
+bool import_hash_table(FILE* import_file, char* import_name, Table* table, HashTable** last_ht){
+    int read;
+    int len_col_name;
+    int node_count;
+    char* col_name = NULL;
+    HashTable* new_ht = NULL;
+    int i, j;
+
+    // read col name
+    read = fread(&len_col_name, sizeof(int), 1, import_file);
+    if(!read_succeed(read, 1, import_name)) return false;
+    read = fread(col_name, sizeof(char), len_col_name, import_file);
+    if(!read_succeed(read, len_col_name, import_name)){
+        free(col_name);
+        col_name = NULL;
+        return false;
+    }
+
+    // init ht and set col name
+    new_ht = init_hash_table();
+
+    new_ht->col_name = strdup(col_name);
+    assert(new_ht->col_name!=NULL);
+
+    for(i=0; i<HASH_TABLE_SIZE; i++){
+        // read number of nodes in current bucket
+        read = fread(&node_count, sizeof(int), 1, import_file);
+        if(!read_succeed(read, 1, import_name)){
+            free(col_name);
+            col_name = NULL;
+            return false;
+        }
+
+        for(j=0; j<node_count; j++){
+            if(!import_hash_node(import_file, import_name, table, new_ht, i)){
+                free(col_name);
+                col_name = NULL;
+                return false;
+            }
+        }
+    }
+
+    // add ht to table
+    if (table->first_hash_table == NULL || table->first_hash_table->col_name == NULL) {
+        // free the dummy if it exists
+        if (table->first_hash_table && table->first_hash_table->col_name == NULL) free_hash_table(table->first_hash_table);
+        table->first_hash_table = new_ht;
+        *last_ht = table->first_hash_table;
+    } else {
+        // append to the end
+        (*last_ht)->next_hash_table = new_ht;
+        *last_ht = new_ht;
+    }
+
+    free(col_name);
+    col_name = NULL;
+    return true;
+}
+
 bool import_table(FILE* import_file, char* import_name){
     int read;
     int len_tab_name;
@@ -320,8 +444,10 @@ bool import_table(FILE* import_file, char* import_name){
     int i;
     char* tab_name = NULL;
     Table* new_tab = NULL;
+    Table* current_tab = NULL;
     Col* last_col = NULL;
     Row* last_row = NULL;
+    HashTable* last_ht = NULL;
 
     // tab name
     read = fread(&len_tab_name, sizeof(int), 1, import_file);
@@ -374,17 +500,25 @@ bool import_table(FILE* import_file, char* import_name){
 
     // import cols
     for(i=0; i<col_count; i++){
-        import_col(import_file, import_name, new_tab, &last_col);
+        if(!import_col(import_file, import_name, new_tab, &last_col)) return false;
     }
 
     // import rows
     for(i=0; i<row_count; i++){
-        import_row(import_file, import_name, new_tab, &last_row);
+        if(!import_row(import_file, import_name, new_tab, &last_row)) return false;
     }
 
+    // import hash tables
+    for(i=0; i<ht_count; i++){
+        if(!import_hash_table(import_file, import_name, new_tab, &last_ht)) return false;
+    }
 
-
-    // TODO: add table to linked list (handle if new_tab is the first or in the middle of linked list)
+    // add table to linked list
+    if(!first_table) first_table = new_tab;
+    else{
+        current_tab = get_last_table(first_table);
+        current_tab->next_table = new_tab;
+    }
 
     free(tab_name);
     tab_name = NULL;
@@ -416,7 +550,12 @@ void import_db(char* import_name){
 
     // read tables
     for(i=0; i<table_count; i++){
-        
+        if(!import_table(import_file, import_name)){
+            free_db(first_table);
+            first_table = NULL;
+            fclose(import_file);
+            return;
+        }
     }
 
     fclose(import_file);

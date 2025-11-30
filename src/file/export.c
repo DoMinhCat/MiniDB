@@ -134,11 +134,14 @@ bool export_hash_node(FILE* output_file, char* output_file_name, Node* hash_node
     int written;
 
     // find index of row and prev row
-    for(current_row=table->first_row; current_row!=NULL; current_row=current_row->next_row){
-        if(current_row==hash_node->prev_row) break;
-        prev_row_index++;
+    if(!hash_node->prev_row) prev_row_index=-1;
+    else{
+        for(current_row=table->first_row; current_row!=NULL; current_row=current_row->next_row){
+            if(current_row==hash_node->prev_row) break;
+            prev_row_index++;
+        }
     }
-
+    
     // write prev row index
     written = fwrite(&prev_row_index, sizeof(int), 1, output_file);
     if(!write_succeed(written, 1, output_file_name)) return false;
