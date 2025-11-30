@@ -8,22 +8,22 @@ Group 2 ESGI 2A3
 IMPORTANT:
     handle edge cases: empty database/table/hash table/hash node
 
-NOTE: export structure for table to fwrite in order:
+NOTE: import structure for table to fwrite in order:
     table count
 
     # metadata for each table:
-    strlen(tab_name) + 1
-    Table name
+    strlen(tab_name) + 1 done
+    Table name done
 
     Num of Cols
     Num of Rows
     Num of Hash Tables
-
-    Next_id of table (int)
+    Next_id of table (int) done 
+    
     Col one by one:
         name
         type
-        constraint
+        constraint done
         strlen of refer_table
         refer_table (str)   
         strlen of refer_col
@@ -52,8 +52,11 @@ NOTE: export structure for table to fwrite in order:
 */ 
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
+#include <assert.h>
 
 #include "../db/db.h"
+#include "../../include/ini.h"
 
 bool read_succeed(int read, int count, char* import_name){
     if(read != count){
@@ -61,6 +64,215 @@ bool read_succeed(int read, int count, char* import_name){
         fprintf(stderr, "Tip: please restart the program to try importing again.\n\n");
         return false;
     }
+    return true;
+}
+
+void free_for_import_col(char** col_name, char** ref_tab_name, char** ref_col_name){
+    free(*col_name); *col_name = NULL;
+    free(*ref_tab_name); *ref_tab_name = NULL;
+    free(*ref_col_name); *ref_col_name = NULL;
+}
+
+bool import_col(FILE* import_file, char* import_name,Table* table, Col** last_col){
+    int read;
+    int len_col_name;
+    int len_ref_tab;
+    int len_ref_col;
+    char* col_name = NULL;
+    char* ref_tab_name = NULL;
+    char* ref_col_name = NULL;
+    ColType col_type;
+    ColConstraintType col_constraint;
+    Col* new_col = NULL;
+
+    // read col name
+    read = fread(len_col_name, sizeof(int), 1, import_file);
+    if(!read_succeed(read, 1, import_name)) return false;
+    read = fread(col_name, sizeof(char), len_col_name, import_file);
+    if(!read_succeed(read, len_col_name, import_name)) {
+        free_for_import_col(&col_name, &ref_tab_name, &ref_col_name);
+        return false;
+    }
+
+    //col_type
+    read = fread(col_type, sizeof(ColType), 1, import_file);
+    if(!read_succeed(read, 1, import_name)) {
+        free_for_import_col(&col_name, &ref_tab_name, &ref_col_name);
+        return false;
+    }
+    // constraint
+    read = fread(col_constraint, sizeof(ColConstraintType), 1, import_file);
+    if(!read_succeed(read, 1, import_name)) {
+        free(col_name);
+        col_name = NULL;
+        return false;
+    }
+
+    // tab and col this col references (still read if it is 0 to consume the int)
+    read = fread(len_ref_tab, sizeof(int), 1, import_file);
+    if(!read_succeed(read, 1, import_name)) {
+        free_for_import_col(&col_name, &ref_tab_name, &ref_col_name);
+        return false;
+    }
+    if(len_ref_tab != 0){
+        read = fread(ref_tab_name, sizeof(char), len_ref_tab, import_file);
+        if(!read_succeed(read, len_ref_tab, import_name)) {
+            free_for_import_col(&col_name, &ref_tab_name, &ref_col_name);
+            return false;
+        }
+    }
+    // col 
+    read = fread(len_ref_col, sizeof(int), 1, import_file);
+    if(!read_succeed(read, 1, import_name)) {
+            free_for_import_col(&col_name, &ref_tab_name, &ref_col_name);
+        return false;
+    }
+    if(len_ref_col != 0){
+        read = fread(ref_col_name, sizeof(char), len_ref_col, import_file);
+        if(!read_succeed(read, len_ref_col, import_name)) {
+            free_for_import_col(&col_name, &ref_tab_name, &ref_col_name);
+            return false;
+        }
+    }
+
+    // init and set col info
+    new_col = init_col();
+
+    new_col->name = strdup(col_name);
+    assert(new_col->name!=NULL);
+    new_col->type = col_type;
+    new_col->constraint = col_constraint;
+
+    if(ref_tab_name){
+        new_col->refer_table = strdup(ref_tab_name);
+        assert(new_col->refer_table!=NULL);
+    }
+    if(ref_col_name){
+        new_col->refer_col = strdup(ref_col_name);
+        assert(new_col->refer_col!=NULL);
+    }
+
+    // add to col linked list of table
+    if (table->first_col == NULL || table->first_col->name == NULL) {
+        // free the dummy if it exists
+        if (table->first_col && table->first_col->name == NULL) free_col(table->first_col);
+        table->first_col = new_col;
+        *last_col = table->first_col;
+    } else {
+        // append to the end
+        (*last_col)->next_col = new_col;
+        *last_col = new_col;
+    }
+
+    free_for_import_col(col_name, ref_tab_name, ref_col_name);
+    return true;
+}
+
+bool import_row(FILE* import_file, char* import_name,Table* table, Row** last_row){
+    int read;
+    int int_count;
+    int double_count;
+    int str_count;
+    int** int_list = NULL;
+    double** double_list = NULL;
+    char** str_list = NULL;
+
+    // read counts
+    read = fread(int_count, sizeof(int), 1, import_file);
+    if(!read_succeed(read, 1, import_name)) return false;
+    read = fread(double_count, sizeof(int), 1, import_file);
+    if(!read_succeed(read, 1, import_name)) return false;
+    read = fread(str_count, sizeof(int), 1, import_file);
+    if(!read_succeed(read, 1, import_name)) return false;
+
+    // calloc data lists
+    int_list = (int**)calloc(int_count, sizeof(int*));
+    assert(int_list!=NULL);
+    double_list = (double**)calloc(double_count, sizeof(double*));
+    assert(double_list!=NULL);
+    str_list = (char**)calloc(str_count, sizeof(char*));
+    assert(str_list!=NULL);
+    
+
+}
+
+bool import_table(FILE* import_file, char* import_name){
+    int read;
+    int len_tab_name;
+    int col_count;
+    int row_count;
+    int ht_count;
+    int next_id;
+    int i;
+    char* tab_name = NULL;
+    Table* new_tab = NULL;
+    Col* last_col = NULL;
+
+    // tab name
+    read = fread(len_tab_name, sizeof(int), 1, import_file);
+    if(read_succeed(read, 1, import_name)) return false;
+    read = fread(tab_name, sizeof(char), len_tab_name, import_file);
+    if(!read_succeed(read, len_tab_name, import_name)){
+        free(tab_name);
+        tab_name = NULL;
+        return false;
+    }
+
+    // num of col
+    read = fread(col_count, sizeof(int), 1, import_file);
+    if(!read_succeed(read, 1, import_name)){
+        free(tab_name);
+        tab_name = NULL;
+        return false;
+    }
+    // num of row
+    read = fread(row_count, sizeof(int), 1, import_file);
+    if(!read_succeed(read, 1, import_name)){
+        free(tab_name);
+        tab_name = NULL;
+        return false;
+    }
+    // num of ht
+    read = fread(ht_count, sizeof(int), 1, import_file);
+    if(!read_succeed(read, 1, import_name)){
+        free(tab_name);
+        tab_name = NULL;
+        return false;
+    }
+    // next_id
+    read = fread(next_id, sizeof(int), 1, import_file);
+    if(!read_succeed(read, 1, import_name)){
+        free(tab_name);
+        tab_name = NULL;
+        return false;
+    }
+
+    // init table and set info read above
+    new_tab = init_table();
+
+    new_tab->name = strdup(tab_name);
+    assert(new_tab->name!=NULL);
+    new_tab->col_count = col_count;
+    new_tab->row_count = row_count;
+    new_tab->hash_table_count = ht_count;
+    new_tab->next_id = next_id;
+
+    // import cols
+    for(i=0; i<col_count; i++){
+        import_col(import_file, import_name, new_tab, &last_col);
+    }
+
+    // import rows
+    for(i=0; i<row_count; i++){
+        // import_col(import_file, import_name, new_tab, &last_col);
+    }
+
+
+
+    // TODO: add table to linked list (handle if new_tab is the first or in the middle of linked list)
+
+    free(tab_name);
+    tab_name = NULL;
     return true;
 }
 
@@ -92,4 +304,6 @@ void import_db(char* import_name){
         
     }
 
+    fclose(import_file);
+    printf("Database imported from '%s' successfully.\n\n", import_name);
 }
