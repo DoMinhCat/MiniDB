@@ -86,7 +86,7 @@ bool import_col(FILE* import_file, char* import_name,Table* table, Col** last_co
     Col* new_col = NULL;
 
     // read col name
-    read = fread(len_col_name, sizeof(int), 1, import_file);
+    read = fread(&len_col_name, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)) return false;
     read = fread(col_name, sizeof(char), len_col_name, import_file);
     if(!read_succeed(read, len_col_name, import_name)) {
@@ -95,13 +95,13 @@ bool import_col(FILE* import_file, char* import_name,Table* table, Col** last_co
     }
 
     //col_type
-    read = fread(col_type, sizeof(ColType), 1, import_file);
+    read = fread(&col_type, sizeof(ColType), 1, import_file);
     if(!read_succeed(read, 1, import_name)) {
         free_for_import_col(&col_name, &ref_tab_name, &ref_col_name);
         return false;
     }
     // constraint
-    read = fread(col_constraint, sizeof(ColConstraintType), 1, import_file);
+    read = fread(&col_constraint, sizeof(ColConstraintType), 1, import_file);
     if(!read_succeed(read, 1, import_name)) {
         free(col_name);
         col_name = NULL;
@@ -109,7 +109,7 @@ bool import_col(FILE* import_file, char* import_name,Table* table, Col** last_co
     }
 
     // tab and col this col references (still read if it is 0 to consume the int)
-    read = fread(len_ref_tab, sizeof(int), 1, import_file);
+    read = fread(&len_ref_tab, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)) {
         free_for_import_col(&col_name, &ref_tab_name, &ref_col_name);
         return false;
@@ -122,7 +122,7 @@ bool import_col(FILE* import_file, char* import_name,Table* table, Col** last_co
         }
     }
     // col 
-    read = fread(len_ref_col, sizeof(int), 1, import_file);
+    read = fread(&len_ref_col, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)) {
             free_for_import_col(&col_name, &ref_tab_name, &ref_col_name);
         return false;
@@ -168,6 +168,41 @@ bool import_col(FILE* import_file, char* import_name,Table* table, Col** last_co
     return true;
 }
 
+void free_for_import_row(int*** int_list, int int_count, double*** double_list, int double_count, char*** str_list, int str_count){
+    int i;
+
+    if(*int_list){
+        for(i=0; i<int_count; i++){
+            if((*int_list)[i]){
+                free((*int_list)[i]);
+                (*int_list)[i] = NULL;
+            }
+        }
+        free(*int_list);
+        *int_list = NULL;
+    }
+    if(*str_list){
+        for(i=0; i<str_count; i++){
+            if((*str_list)[i]){
+                free((*str_list)[i]);
+                (*str_list)[i] = NULL;
+            }
+        }
+        free(*str_list);
+        *str_list = NULL;
+    }
+    if(*double_list){
+        for(i=0; i<double_count; i++){
+            if((*double_list)[i]){
+                free((*double_list)[i]);
+                (*double_list)[i] = NULL;
+            }
+        }
+        free(*double_list);
+        *double_list = NULL;
+    }
+}
+
 bool import_row(FILE* import_file, char* import_name,Table* table, Row** last_row){
     int read;
     int int_count;
@@ -176,13 +211,16 @@ bool import_row(FILE* import_file, char* import_name,Table* table, Row** last_ro
     int** int_list = NULL;
     double** double_list = NULL;
     char** str_list = NULL;
+    int i;
+    unsigned char null_marker;
+    Row* new_row = NULL;
 
     // read counts
-    read = fread(int_count, sizeof(int), 1, import_file);
+    read = fread(&int_count, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)) return false;
-    read = fread(double_count, sizeof(int), 1, import_file);
+    read = fread(&double_count, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)) return false;
-    read = fread(str_count, sizeof(int), 1, import_file);
+    read = fread(&str_count, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)) return false;
 
     // calloc data lists
@@ -193,7 +231,83 @@ bool import_row(FILE* import_file, char* import_name,Table* table, Row** last_ro
     str_list = (char**)calloc(str_count, sizeof(char*));
     assert(str_list!=NULL);
     
+    // int list
+    for(i=0; i<int_count; i++){
+        read = fread(&null_marker, sizeof(unsigned char), 1, import_file);
+        if(!read_succeed(read, 1, import_name)){
+            free_for_import_row(&int_list, int_count, &double_list, double_count, &str_list, str_count);
+            return false;
+        }
+        if(null_marker != 0){
+            int_list[i] = (int*)malloc(sizeof(int));
+            assert(int_list[i] != NULL);
+            read = fread(int_list[i], sizeof(int), 1, import_file);
+            if(!read_succeed(read, 1, import_name)){
+                free_for_import_row(&int_list, int_count, &double_list, double_count, &str_list, str_count);
+                return false;
+            }
+        }
+    }
 
+    // double list
+    for(i=0; i<double_count; i++){
+        read = fread(&null_marker, sizeof(unsigned char), 1, import_file);
+        if(!read_succeed(read, 1, import_name)){
+            free_for_import_row(&int_list, int_count, &double_list, double_count, &str_list, str_count);
+            return false;
+        }
+        if(null_marker != 0){
+            double_list[i] = (double*)malloc(sizeof(double));
+            assert(double_list[i] != NULL);
+            read = fread(double_list[i], sizeof(double), 1, import_file);
+            if(!read_succeed(read, 1, import_name)){
+                free_for_import_row(&int_list, int_count, &double_list, double_count, &str_list, str_count);
+                return false;
+            }
+        }
+    }
+
+    int len_str_item;
+    // str list
+    for(i=0; i<str_count; i++){
+        read = fread(&null_marker, sizeof(unsigned char), 1, import_file);
+        if(!read_succeed(read, 1, import_name)){
+            free_for_import_row(&int_list, int_count, &double_list, double_count, &str_list, str_count);
+            return false;
+        }
+        if(null_marker != 0){
+            read = fread(&len_str_item, sizeof(int), 1, import_file);
+            if(!read_succeed(read, 1, import_name)){
+                free_for_import_row(&int_list, int_count, &double_list, double_count, &str_list, str_count);
+                return false;
+            }
+            str_list[i] = (char*)malloc(sizeof(char) * len_str_item);
+            assert(str_list[i] != NULL);
+            read = fread(str_list[i], sizeof(char), len_str_item, import_file);
+            if(!read_succeed(read, len_str_item, import_name)){
+                free_for_import_row(&int_list, int_count, &double_list, double_count, &str_list, str_count);
+                return false;
+            }
+        }
+    }
+    
+    // set data lists to row
+    new_row = init_row();
+    new_row->int_list = int_list;
+    new_row->double_list = double_list;
+    new_row->str_list = str_list;
+
+    // set pointer
+    if (!table->first_row) {
+        table->first_row = new_row;
+        *last_row = table->first_row;
+    } else {
+        // append to the end
+        (*last_row)->next_row = new_row;
+        *last_row = new_row;
+    }
+
+    return true;
 }
 
 bool import_table(FILE* import_file, char* import_name){
@@ -207,9 +321,10 @@ bool import_table(FILE* import_file, char* import_name){
     char* tab_name = NULL;
     Table* new_tab = NULL;
     Col* last_col = NULL;
+    Row* last_row = NULL;
 
     // tab name
-    read = fread(len_tab_name, sizeof(int), 1, import_file);
+    read = fread(&len_tab_name, sizeof(int), 1, import_file);
     if(read_succeed(read, 1, import_name)) return false;
     read = fread(tab_name, sizeof(char), len_tab_name, import_file);
     if(!read_succeed(read, len_tab_name, import_name)){
@@ -219,28 +334,28 @@ bool import_table(FILE* import_file, char* import_name){
     }
 
     // num of col
-    read = fread(col_count, sizeof(int), 1, import_file);
+    read = fread(&col_count, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)){
         free(tab_name);
         tab_name = NULL;
         return false;
     }
     // num of row
-    read = fread(row_count, sizeof(int), 1, import_file);
+    read = fread(&row_count, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)){
         free(tab_name);
         tab_name = NULL;
         return false;
     }
     // num of ht
-    read = fread(ht_count, sizeof(int), 1, import_file);
+    read = fread(&ht_count, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)){
         free(tab_name);
         tab_name = NULL;
         return false;
     }
     // next_id
-    read = fread(next_id, sizeof(int), 1, import_file);
+    read = fread(&next_id, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)){
         free(tab_name);
         tab_name = NULL;
@@ -264,7 +379,7 @@ bool import_table(FILE* import_file, char* import_name){
 
     // import rows
     for(i=0; i<row_count; i++){
-        // import_col(import_file, import_name, new_tab, &last_col);
+        import_row(import_file, import_name, new_tab, &last_row);
     }
 
 
