@@ -126,7 +126,7 @@ void print_empty_table(Table* table1, Table* table2, SelectParams* params) {
         printf("%*s|", col_width, "");
     }
     printf("\n\n");
-    printf("Found 0 row.\n");
+    printf("Found 0 row.\n\n");
 }
 
 void print_data(Table* table, Row* current_row, SelectParams* params) {
@@ -237,7 +237,7 @@ void select_simple(SelectParams* params, Table* table){
     }
 
     // print number of rows
-    printf("\nFound %d %s.\n", row_count, row_count>1?"rows":"row");
+    printf("\nFound %d %s.\n\n", row_count, row_count>1?"rows":"row");
 }
 
 void select_where_only(SelectParams* params, Table* table){
@@ -281,7 +281,7 @@ void select_where_only(SelectParams* params, Table* table){
 
     // free before exit
     free_filtered_set(filtered);
-    printf("\nFound %d %s.\n", row_count, row_count>1?"rows":"row");
+    printf("\nFound %d %s.\n\n", row_count, row_count>1?"rows":"row");
 }
 
 void select_join_where(SelectParams* params, Table* tab, Table* condition_tab, Col* col_tab, Col* col_tab_where, SelectedColInfo* col_info){
@@ -338,7 +338,7 @@ void select_join_where(SelectParams* params, Table* tab, Table* condition_tab, C
 
     // IMPORTANT free filtered set after print, before return
     free_filtered_set(result);
-    printf("\nFound %d %s.\n", row_count, row_count>1?"rows":"row");
+    printf("\nFound %d %s.\n\n", row_count, row_count>1?"rows":"row");
 }
 
 void select_join_only(Table* tab1, Table* tab2, SelectParams* params, SelectedColInfo* col_info, Col* col1, Col* col2){
@@ -362,7 +362,7 @@ void select_join_only(Table* tab1, Table* tab2, SelectParams* params, SelectedCo
     }
 
     free_filtered_set(filtered);
-    printf("\nFound %d %s.\n", row_count, row_count>1?"rows":"row");
+    printf("\nFound %d %s.\n\n", row_count, row_count>1?"rows":"row");
 }
 
 void select(Query* query) {
