@@ -90,6 +90,10 @@ bool import_col(FILE* import_file, char* import_name,Table* table, Col** last_co
     // read col name
     read = fread(&len_col_name, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)) return false;
+
+    col_name = (char*)malloc(sizeof(char) * len_col_name);
+    assert(col_name != NULL);
+
     read = fread(col_name, sizeof(char), len_col_name, import_file);
     if(!read_succeed(read, len_col_name, import_name)) {
         free_for_import_col(&col_name, &ref_tab_name, &ref_col_name);
@@ -117,6 +121,8 @@ bool import_col(FILE* import_file, char* import_name,Table* table, Col** last_co
         return false;
     }
     if(len_ref_tab != 0){
+        ref_tab_name = (char*)malloc(sizeof(char) * len_ref_tab);
+        assert(ref_tab_name != NULL);
         read = fread(ref_tab_name, sizeof(char), len_ref_tab, import_file);
         if(!read_succeed(read, len_ref_tab, import_name)) {
             free_for_import_col(&col_name, &ref_tab_name, &ref_col_name);
@@ -130,6 +136,8 @@ bool import_col(FILE* import_file, char* import_name,Table* table, Col** last_co
         return false;
     }
     if(len_ref_col != 0){
+        ref_col_name = (char*)malloc(sizeof(char) * len_ref_col);
+        assert(ref_col_name != NULL);
         read = fread(ref_col_name, sizeof(char), len_ref_col, import_file);
         if(!read_succeed(read, len_ref_col, import_name)) {
             free_for_import_col(&col_name, &ref_tab_name, &ref_col_name);
@@ -333,7 +341,9 @@ bool import_hash_node(FILE* import_file, char* import_name, Table* table, HashTa
     read = fread(&len_val, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)) return false; 
     // original val
-    read = fread(&val, sizeof(int), len_val, import_file);
+    val = (char*)malloc(sizeof(char) * len_val);
+    assert(val!=NULL);
+    read = fread(val, sizeof(char), len_val, import_file);
     if(!read_succeed(read, len_val, import_name)) {
         free(val);
         val = NULL;
@@ -386,6 +396,10 @@ bool import_hash_table(FILE* import_file, char* import_name, Table* table, HashT
     // read col name
     read = fread(&len_col_name, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)) return false;
+
+    col_name = (char*)malloc(sizeof(char) * len_col_name);
+    assert(col_name != NULL);
+
     read = fread(col_name, sizeof(char), len_col_name, import_file);
     if(!read_succeed(read, len_col_name, import_name)){
         free(col_name);
@@ -451,7 +465,11 @@ bool import_table(FILE* import_file, char* import_name){
 
     // tab name
     read = fread(&len_tab_name, sizeof(int), 1, import_file);
-    if(read_succeed(read, 1, import_name)) return false;
+    if(!read_succeed(read, 1, import_name)) return false;
+
+    tab_name = (char*)malloc(sizeof(char) * len_tab_name);
+    assert(tab_name != NULL);
+
     read = fread(tab_name, sizeof(char), len_tab_name, import_file);
     if(!read_succeed(read, len_tab_name, import_name)){
         free(tab_name);
@@ -500,17 +518,29 @@ bool import_table(FILE* import_file, char* import_name){
 
     // import cols
     for(i=0; i<col_count; i++){
-        if(!import_col(import_file, import_name, new_tab, &last_col)) return false;
+        if(!import_col(import_file, import_name, new_tab, &last_col)){
+            free(tab_name);
+            tab_name = NULL;
+            return false;
+        }
     }
 
     // import rows
     for(i=0; i<row_count; i++){
-        if(!import_row(import_file, import_name, new_tab, &last_row)) return false;
+        if(!import_row(import_file, import_name, new_tab, &last_row)){
+            free(tab_name);
+            tab_name = NULL;
+            return false;
+        }
     }
 
     // import hash tables
     for(i=0; i<ht_count; i++){
-        if(!import_hash_table(import_file, import_name, new_tab, &last_ht)) return false;
+        if(!import_hash_table(import_file, import_name, new_tab, &last_ht)){
+            free(tab_name);
+            tab_name = NULL;
+            return false;
+        }
     }
 
     // add table to linked list

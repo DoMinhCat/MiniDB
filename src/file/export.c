@@ -119,8 +119,8 @@ bool export_row(FILE* output_file, char* output_file_name, Row* row){
             written = fwrite(&len_str, sizeof(int), 1, output_file);
             if(!write_succeed(written, 1, output_file_name)) return false;
             // string value
-            written = fwrite(row->str_list[i], sizeof(char), 1, output_file);
-            if(!write_succeed(written, 1, output_file_name)) return false;
+            written = fwrite(row->str_list[i], sizeof(char), strlen, output_file);
+            if(!write_succeed(written, strlen, output_file_name)) return false;
         }
     }
     return true;
@@ -141,7 +141,7 @@ bool export_hash_node(FILE* output_file, char* output_file_name, Node* hash_node
             prev_row_index++;
         }
     }
-    
+
     // write prev row index
     written = fwrite(&prev_row_index, sizeof(int), 1, output_file);
     if(!write_succeed(written, 1, output_file_name)) return false;
