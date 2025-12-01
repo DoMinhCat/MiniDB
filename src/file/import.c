@@ -51,11 +51,13 @@ NOTE: import structure for table to fwrite in order:
                 strlen of original_value and original_value (str)
 */ 
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
 #include <assert.h>
 
-#include "../db/db.h"
+#include "../../helper/db/db.h"
+#include "../../include/db.h"
 #include "../../include/ini.h"
 #include "../../include/clean.h"
 #include "../../include/global.h"
@@ -174,7 +176,7 @@ bool import_col(FILE* import_file, char* import_name,Table* table, Col** last_co
         *last_col = new_col;
     }
 
-    free_for_import_col(col_name, ref_tab_name, ref_col_name);
+    free_for_import_col(&col_name, &ref_tab_name, &ref_col_name);
     return true;
 }
 
@@ -465,7 +467,10 @@ bool import_table(FILE* import_file, char* import_name){
 
     // tab name
     read = fread(&len_tab_name, sizeof(int), 1, import_file);
-    if(!read_succeed(read, 1, import_name)) return false;
+    if(!read_succeed(read, 1, import_name)) {
+        printf("Failed reading tab name len");
+        return false;
+    }
 
     tab_name = (char*)malloc(sizeof(char) * len_tab_name);
     assert(tab_name != NULL);
@@ -474,6 +479,7 @@ bool import_table(FILE* import_file, char* import_name){
     if(!read_succeed(read, len_tab_name, import_name)){
         free(tab_name);
         tab_name = NULL;
+        printf("Failed reading tab name");
         return false;
     }
 
@@ -481,6 +487,7 @@ bool import_table(FILE* import_file, char* import_name){
     read = fread(&col_count, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)){
         free(tab_name);
+        printf("Failed reading col num");
         tab_name = NULL;
         return false;
     }
@@ -488,6 +495,7 @@ bool import_table(FILE* import_file, char* import_name){
     read = fread(&row_count, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)){
         free(tab_name);
+        printf("Failed reading row num");
         tab_name = NULL;
         return false;
     }
@@ -496,13 +504,15 @@ bool import_table(FILE* import_file, char* import_name){
     if(!read_succeed(read, 1, import_name)){
         free(tab_name);
         tab_name = NULL;
+        printf("Failed reading ht num");
         return false;
     }
-    // next_id
-    read = fread(&next_id, sizeof(int), 1, import_file);
-    if(!read_succeed(read, 1, import_name)){
+        // next_id
+        read = fread(&next_id, sizeof(int), 1, import_file);
+        if(!read_succeed(read, 1, import_name)){
         free(tab_name);
         tab_name = NULL;
+        printf("Failed reading next id");
         return false;
     }
 
@@ -521,6 +531,7 @@ bool import_table(FILE* import_file, char* import_name){
         if(!import_col(import_file, import_name, new_tab, &last_col)){
             free(tab_name);
             tab_name = NULL;
+        printf("Failed reading cols");
             return false;
         }
     }
@@ -530,6 +541,7 @@ bool import_table(FILE* import_file, char* import_name){
         if(!import_row(import_file, import_name, new_tab, &last_row)){
             free(tab_name);
             tab_name = NULL;
+        printf("Failed reading rows");
             return false;
         }
     }
@@ -539,6 +551,7 @@ bool import_table(FILE* import_file, char* import_name){
         if(!import_hash_table(import_file, import_name, new_tab, &last_ht)){
             free(tab_name);
             tab_name = NULL;
+        printf("Failed reading ht");
             return false;
         }
     }
@@ -559,8 +572,6 @@ void import_db(char* import_name){
     FILE* import_file = NULL;
     int read;
     int table_count;
-    int col_count;
-    int row_count;
     int i;
 
     import_file = fopen(import_name, "rb");

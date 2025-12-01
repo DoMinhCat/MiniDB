@@ -10,6 +10,7 @@ Group 2 ESGI 2A3
 #include "db.h"
 
 void export_db(char* output_file_name, Table* first_table);
+void import_db(char* import_name);
 
 #endif
 

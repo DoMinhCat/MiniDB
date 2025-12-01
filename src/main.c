@@ -62,7 +62,7 @@ int main(){
         } while(!import_name);
 
         printf("Importing database from '%s'...\n", import_name);
-        // import_db();
+        import_db(import_name);
 
         free(import_name);
         import_name = NULL;
@@ -206,7 +206,7 @@ int main(){
             export_name = read_file_name(file_buffer);
         } while(!export_name);
         
-        printf("Exporting database from '%s'...\n", export_name);
+        printf("Exporting database to '%s'...\n", export_name);
         export_db(export_name, first_table);
 
         free(export_name);

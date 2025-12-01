@@ -10,4 +10,5 @@
 .idea
 *.bin
 /build/
+sandbox.c
 *.o
