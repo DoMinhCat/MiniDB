@@ -601,12 +601,14 @@ bool ref_integrity_check_delete(Table* table, FilteredRow* rows_to_del_fr, bool 
     Col* current_col = NULL;
     Row* current_row = NULL;
     FilteredRow* current_row_to_del = NULL;
+    Row* row_to_check = NULL;
     int data_index_referencing;
     int data_index_referenced;  
 
     // check referential integrity looping all tables except the one to be deleted
     for(current_table=first_table; current_table!=NULL; current_table=current_table->next_table){
         if(strcmp(current_table->name, table->name) != 0){
+            
             // loop all cols of table to check
             for(current_col=current_table->first_col; current_col!=NULL; current_col=current_col->next_col){
                 if(current_col->constraint == FK && strcmp(current_col->refer_table, table->name) == 0){
@@ -616,24 +618,45 @@ bool ref_integrity_check_delete(Table* table, FilteredRow* rows_to_del_fr, bool 
 
                     // loop all rows to check
                     for(current_row = current_table->first_row; current_row!=NULL; current_row=current_row->next_row){
-                        if(current_col->type == INT && current_row->int_list[data_index_referencing]){
-                            value_exist = exist_in_ht(ht_check, current_row->int_list[data_index_referencing][0], NULL);  
+                        if(current_col->type == INT){
+                            // SKIP NULL values - they can't violate referential integrity
+                            if(!current_row->int_list[data_index_referencing]){
+                                continue;
+                            }
+                            
+                            int fk_value = current_row->int_list[data_index_referencing][0];
+                            
+                            value_exist = exist_in_ht(ht_check, fk_value, NULL);  
                             if(value_exist){
+                                
                                 if(delete_all){
-                                    // since we delete all rows, the referencing existing in hash table means it also exists in the col of table to del 
                                     fprintf(stderr, "Execution error: referential integrity violated, '%s' column is referenced by '%s' column of '%s' table.\n\n", current_col->refer_col, current_col->name, current_table->name);
                                     return false;
                                 }else{
+                                    
                                     // traverse rows to del and check if it contain the referencing value
                                     for(current_row_to_del=rows_to_del_fr; current_row_to_del!=NULL; current_row_to_del=current_row_to_del->next_filtered_row){
-                                        if(current_row->int_list[data_index_referencing][0] == current_row_to_del->int_joined_list[data_index_referenced][0]){
+                                        // Use the actual row pointer from FilteredRow
+                                        row_to_check = current_row_to_del->row;
+                                        
+                                        // SKIP if the row to delete has NULL in the referenced column
+                                        if(!row_to_check->int_list[data_index_referenced]){
+                                            continue;
+                                        }
+                                        
+                                        int ref_value = row_to_check->int_list[data_index_referenced][0];
+                                        
+                                        if(fk_value == ref_value){
                                             fprintf(stderr, "Execution error: referential integrity violated, '%s' column is referenced by '%s' column of '%s' table.\n\n", current_col->refer_col, current_col->name, current_table->name);
                                             return false;
                                         }
                                     }
                                 }
-                            }
-                        }else if(current_col->type == STRING && current_row->str_list[data_index_referencing]){
+                            } 
+                        }else if(current_col->type == STRING){
+                            // SKIP NULL values - they can't violate referential integrity
+                            if(!current_row->str_list[data_index_referencing]) continue;
+                            
                             value_exist = exist_in_ht(ht_check, 0, current_row->str_list[data_index_referencing]);  
                             if(value_exist){
                                 if(delete_all){
@@ -642,7 +665,13 @@ bool ref_integrity_check_delete(Table* table, FilteredRow* rows_to_del_fr, bool 
                                 }else{
                                     // traverse rows to del and check if it contain the referencing value
                                     for(current_row_to_del=rows_to_del_fr; current_row_to_del!=NULL; current_row_to_del=current_row_to_del->next_filtered_row){
-                                        if(strcmp(current_row->str_list[data_index_referencing], current_row_to_del->str_joined_list[data_index_referenced]) == 0){
+                                        // Use the actual row pointer from FilteredRow
+                                        row_to_check = current_row_to_del->row;
+                                        
+                                        // SKIP if the row to delete has NULL in the referenced column
+                                        if(!row_to_check->str_list[data_index_referenced]) continue;
+                                        
+                                        if(strcmp(current_row->str_list[data_index_referencing], row_to_check->str_list[data_index_referenced]) == 0){
                                             fprintf(stderr, "Execution error: referential integrity violated, '%s' column is referenced by '%s' column of '%s' table.\n\n", current_col->refer_col, current_col->name, current_table->name);
                                             return false;
                                         }
@@ -658,6 +687,6 @@ bool ref_integrity_check_delete(Table* table, FilteredRow* rows_to_del_fr, bool 
             }
         }
     }
+    
     return true;
 }
-

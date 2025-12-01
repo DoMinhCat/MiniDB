@@ -28,6 +28,7 @@ void flush_extra(){
 int main(){
     char import_export_choice;
     char* export_name = NULL;
+    char* import_name = NULL;
 
     char batch_buffer[MAX_BATCH_SIZE];
     char* batch_input = NULL;
@@ -55,11 +56,17 @@ int main(){
     
     if(import_export_choice == 'y' || import_export_choice == 'Y'){
         print_divider();
-        printf("Import confirmed\n");
+        do{
+            printf("\nChoose the binary file to be imported (without extension): ");
+            import_name = read_file_name(file_buffer);
+        } while(!import_name);
+
+        printf("Importing database from '%s'...\n", import_name);
+        import_db(import_name);
+
+        free(import_name);
+        import_name = NULL;
         print_divider();
-        
-        // Call import function from file folder
-        // import_db();
     }else {
         print_divider();
         printf("Database importation aborted.\n");
@@ -199,7 +206,7 @@ int main(){
             export_name = read_file_name(file_buffer);
         } while(!export_name);
         
-        printf("Exporting database...\n");
+        printf("Exporting database to '%s'...\n", export_name);
         export_db(export_name, first_table);
 
         free(export_name);

@@ -20,7 +20,7 @@ Projet final de C à ESGI
 
 4. Features
 
-    - Strings does not need to be wrapped inside quotes or double quotes
+    - Strings must not and does not need to be wrapped inside quotes or double quotes
     - Table and column names are case sensitive
     - Available types : int, string, and double
     - Multiple commands execution supported, each command must be separated by a new-line character and the command chain must end with a semicolon
@@ -37,6 +37,8 @@ Projet final de C à ESGI
     - The order of tables passed for DROP matters (foreign key constraint violation)
     - "exit" or "quit" to exit the program
 
+    - Import file must be in the current directory
+
     - Max col per table = 50
     - Max length for str values 256 (\0 excluded)
     - Max table = 100
@@ -45,13 +47,13 @@ Projet final de C à ESGI
 
 5. Usage
 
-    - `show tables`
-    - `describe table tab1`
-    - `delete from tab1 [where col1 = 6]`
-    - `drop table tab1 [, tab2, tab3,...]`
-    - `create table tab1 ( col1 int pk, col2 string fk references tab_to_refer col_to_refer, col3 double )`, spaces between parentheses are obligated for the program to parse the command correctly
-    - `insert into tab1 ( col1, col2 ) values ( val1, val2 )`
-    - `select ( col1, col2, col3 )/* from tab1 [join tab2 on col1 = col2] [where col1 = xyz]`, order of col1 and col2 in JOIN clause matters, col1 and col2 correspond to tab1 and tab2 respectively
+    - `show tables;`
+    - `describe table tab1;`
+    - `delete from tab1 [where col1 = 6];`
+    - `drop table tab1 [, tab2, tab3,...];`
+    - `create table tab1 ( col1 int pk, col2 string fk references tab_to_refer col_to_refer, col3 double );`, spaces between parentheses are obligated for the program to parse the command correctly
+    - `insert into tab1 ( col1, col2 ) values ( val1, val2 );`
+    - `select ( col1, col2, col3 )/* from tab1 [join tab2 on col1 = col2] [where col1 = xyz];`, order of col1 and col2 in JOIN clause matters, col1 and col2 correspond to tab1 and tab2 respectively
 
 6. Technical choice clarification
 
@@ -75,8 +77,8 @@ insert into customers ( id, name, age ) values ( 1, Alice, 30 )
 insert into customers ( id, name, age ) values ( 2, Bob, 25 )
 insert into customers ( id, name, age ) values ( 3, Carol, 40 )
 insert into customers ( id, name, age ) values ( 4, Dave, 50 )
-insert into customers ( id ) values ( 45 )
-insert into customers ( id ) values ( 46 )
+insert into customers ( id ) values ( 47 )
+insert into customers ( id ) values ( 48 )
 
 insert into orders ( order_id, customer_id, amount ) values ( 10, 1, 99.5 )
 insert into orders ( order_id, customer_id, amount ) values ( 11, 1, 20 )
@@ -109,5 +111,4 @@ delete from customers where id = 3;
 drop table customers, orders;
 
 **Ideas to improve (if time allows)**
-    - Select col AS abc (if not too complicated)
     - Default constraint

@@ -14,53 +14,9 @@ Group 2 ESGI 2A3
 #include "../../include/hash.h"
 #include "../../include/global.h"
 
-/*
-IMPORTANT: for all strings read later need to alloc strlen + 1 and set \0 at the end
-
-NOTE: export structure for table to fwrite in order:
-    # metadata:
-    strlen(tab_name) + 1
-    Table name
-
-    Num of Cols
-    Num of Rows
-    Num of Hash Tables
-
-    Next_id of table (int)
-    Col one by one:
-        name
-        type
-        constraint
-        strlen of refer_table
-        refer_table (str)   
-        strlen of refer_col
-        refer_col (str)
-
-    Row one by one:
-        int_count
-        double_count
-        str_count
-
-        IMPORTANT: before each item is a char 1 or 0 to indicate if it is null or not
-        example: 0|1value
-
-        int items: null marker then item
-        double items: null marker then item
-        str items: null marker, string len + 1 then item
-
-    Write hash table one by one:
-        strlen of col_name, col_name
-
-        write 67 buckets one by one:
-            Loop to count then write num of nodes that handle collision
-            write each collision node:
-                IMPORTANT: for prev_row and row, write the row position (int) from first row (first row=1), not the pointer value. So if prev_row_index=0 => prev_row=NULL
-                strlen of original_value and original_value (str)
-*/ 
-
 bool write_succeed(int written, int count, char* file_name){
     if(written != count){
-        fprintf(stderr, "Export error: writing to '%s' failed, exportation aborted.\n\n", file_name);
+        fprintf(stderr, "Exportation error: unable to write to '%s', exportation aborted.\n\n", file_name);
         return false;
     }
     return true;
@@ -74,34 +30,58 @@ bool export_col(FILE* output_file, char* output_file_name, Col* col){
     
     // len of col name
     written = fwrite(&len_name, sizeof(int), 1, output_file);
-    if(!write_succeed(written, 1, output_file_name)) return false;
+    if(!write_succeed(written, 1, output_file_name)){
+        return false;
+        printf("Failed writing col name len in export col\n");        
+    }
     // col name
     written = fwrite(col->name, sizeof(char), len_name, output_file);
-    if(!write_succeed(written, len_name, output_file_name)) return false;
+    if(!write_succeed(written, len_name, output_file_name)){
+        return false;
+        printf("Failed writing col name in export col\n");        
+    }
 
     // type
     written = fwrite(&col->type, sizeof(ColType), 1, output_file);
-    if(!write_succeed(written, 1, output_file_name)) return false;
+    if(!write_succeed(written, 1, output_file_name)){
+        return false;
+        printf("Failed writing col type in export col\n");        
+    }
     // constraint
     written = fwrite(&col->constraint, sizeof(ColConstraintType), 1, output_file);
-    if(!write_succeed(written, 1, output_file_name)) return false;
+    if(!write_succeed(written, 1, output_file_name)){
+        return false;
+        printf("Failed writing col constr in export col\n");        
+    }
 
     // len of refer table
     written = fwrite(&len_ref_tab, sizeof(int), 1, output_file);
-    if(!write_succeed(written, 1, output_file_name)) return false;
+    if(!write_succeed(written, 1, output_file_name)){
+        return false;
+        printf("Failed writing ref tab len in export col\n");        
+    }
     // refer tab
     if(len_ref_tab!=0){
         written = fwrite(col->refer_table, sizeof(char), len_ref_tab, output_file);
-        if(!write_succeed(written, len_ref_tab, output_file_name)) return false;
+        if(!write_succeed(written, len_ref_tab, output_file_name)){
+        return false;
+        printf("Failed writing ref tab in export col\n");        
+    }
     }
 
     // len of refer col
     written = fwrite(&len_ref_col, sizeof(int), 1, output_file);
-    if(!write_succeed(written, 1, output_file_name)) return false;
+    if(!write_succeed(written, 1, output_file_name)){
+        return false;
+        printf("Failed writing ref col len in export col\n");        
+    }
     // refer col
     if(len_ref_col!=0){
         written = fwrite(col->refer_col, sizeof(char), len_ref_col, output_file);
-        if(!write_succeed(written, len_ref_col, output_file_name)) return false;    
+        if(!write_succeed(written, len_ref_col, output_file_name)){
+        return false;
+        printf("Failed writing ref col in export col\n");        
+    }    
     }
 
     return true;
@@ -115,24 +95,39 @@ bool export_row(FILE* output_file, char* output_file_name, Row* row){
 
     // int count
     written = fwrite(&row->int_count, sizeof(int), 1, output_file);
-    if(!write_succeed(written, 1, output_file_name)) return false;
+    if(!write_succeed(written, 1, output_file_name)) {
+        printf("Failed to write int count in export row");
+        return false;
+    }
     // double count
     written = fwrite(&row->double_count, sizeof(int), 1, output_file);
-    if(!write_succeed(written, 1, output_file_name)) return false;
+    if(!write_succeed(written, 1, output_file_name)) {
+        printf("Failed to write douebl count in export row");
+        return false;
+    }
     // str count
     written = fwrite(&row->str_count, sizeof(int), 1, output_file);
-    if(!write_succeed(written, 1, output_file_name)) return false;
+    if(!write_succeed(written, 1, output_file_name)) {
+        printf("Failed to write str count in export row");
+        return false;
+    }
 
     // int list
     for(i=0; i<row->int_count; i++){
         // null marker 
         null_marker = row->int_list[i] ? 1 : 0;
         written = fwrite(&null_marker, sizeof(unsigned char), 1, output_file);
-        if(!write_succeed(written, 1, output_file_name)) return false;
+        if(!write_succeed(written, 1, output_file_name)) {
+            printf("Failed to write int marker in export row");
+            return false;
+        }
         // write value if not null
         if(row->int_list[i]){
             written = fwrite(row->int_list[i], sizeof(int), 1, output_file);
-            if(!write_succeed(written, 1, output_file_name)) return false;
+            if(!write_succeed(written, 1, output_file_name)) {
+                printf("Failed to write int item in export row");
+                return false;
+            }
         }
     }
 
@@ -141,11 +136,17 @@ bool export_row(FILE* output_file, char* output_file_name, Row* row){
         // null marker 
         null_marker = row->double_list[i] ? 1 : 0;
         written = fwrite(&null_marker, sizeof(unsigned char), 1, output_file);
-        if(!write_succeed(written, 1, output_file_name)) return false;
+        if(!write_succeed(written, 1, output_file_name)) {
+            printf("Failed to write double marker in export row");
+            return false;
+        }
         // write value if not null
         if(row->double_list[i]){
             written = fwrite(row->double_list[i], sizeof(double), 1, output_file);
-            if(!write_succeed(written, 1, output_file_name)) return false;
+            if(!write_succeed(written, 1, output_file_name)) {
+                printf("Failed to write double item in export row");
+                return false;
+            }
         }
     }
 
@@ -154,17 +155,26 @@ bool export_row(FILE* output_file, char* output_file_name, Row* row){
         // null marker 
         null_marker = row->str_list[i] ? 1 : 0;
         written = fwrite(&null_marker, sizeof(unsigned char), 1, output_file);
-        if(!write_succeed(written, 1, output_file_name)) return false;
+        if(!write_succeed(written, 1, output_file_name)) {
+            printf("Failed to write str marker in export row");
+            return false;
+        }
         
         // write if not null
         if(row->str_list[i]){
             len_str = strlen(row->str_list[i]) + 1;
             // len of str item
             written = fwrite(&len_str, sizeof(int), 1, output_file);
-            if(!write_succeed(written, 1, output_file_name)) return false;
+            if(!write_succeed(written, 1, output_file_name)) {
+                printf("Failed to write str item len in export row");
+                return false;
+            }
             // string value
-            written = fwrite(row->str_list[i], sizeof(char), 1, output_file);
-            if(!write_succeed(written, 1, output_file_name)) return false;
+            written = fwrite(row->str_list[i], sizeof(char), (size_t)len_str, output_file);
+            if(!write_succeed(written, (size_t)len_str, output_file_name)) {
+                printf("Failed to write str item in export row");
+                return false;
+            }
         }
     }
     return true;
@@ -178,9 +188,12 @@ bool export_hash_node(FILE* output_file, char* output_file_name, Node* hash_node
     int written;
 
     // find index of row and prev row
-    for(current_row=table->first_row; current_row!=NULL; current_row=current_row->next_row){
-        if(current_row==hash_node->prev_row) break;
-        prev_row_index++;
+    if(!hash_node->prev_row) prev_row_index=-1;
+    else{
+        for(current_row=table->first_row; current_row!=NULL; current_row=current_row->next_row){
+            if(current_row==hash_node->prev_row) break;
+            prev_row_index++;
+        }
     }
 
     // write prev row index
@@ -245,29 +258,50 @@ bool export_table(FILE* output_file, char* output_file_name, Table* table){
 
     // write length of table name + 1 (for \0)
     written = fwrite(&tab_name_len, sizeof(int), 1, output_file);
-    if(!write_succeed(written, 1, output_file_name)) return false;
+    if(!write_succeed(written, 1, output_file_name)){ 
+        printf("Failed writing tab name len in export tab\n");        
+        return false;
+    }
     // name of table
     written = fwrite(table->name, sizeof(char), tab_name_len, output_file);
-    if(!write_succeed(written, tab_name_len, output_file_name)) return false;
+    if(!write_succeed(written, tab_name_len, output_file_name)){ 
+        printf("Failed writing tab name in export tab\n");        
+        return false;
+    }
 
     // num of cols
     written = fwrite(&(table->col_count), sizeof(int), 1, output_file);
-    if(!write_succeed(written, 1, output_file_name)) return false;
+    if(!write_succeed(written, 1, output_file_name)){ 
+        printf("Failed writing col num in export tab\n");        
+        return false;
+    }
     // num of rows
     written = fwrite(&(table->row_count), sizeof(int), 1, output_file);
-    if(!write_succeed(written, 1, output_file_name)) return false;
+    if(!write_succeed(written, 1, output_file_name)){ 
+        printf("Failed writing row num in export tab\n");        
+        return false;
+    }
     // num of hash tables
     written = fwrite(&(table->hash_table_count), sizeof(int), 1, output_file);
-    if(!write_succeed(written, 1, output_file_name)) return false;
+    if(!write_succeed(written, 1, output_file_name)){ 
+        printf("Failed writing ht num in export tab\n");        
+        return false;
+    }
 
     // next_id
     written = fwrite(&(table->next_id), sizeof(int), 1, output_file);
-    if(!write_succeed(written, 1, output_file_name)) return false;
+    if(!write_succeed(written, 1, output_file_name)){ 
+        printf("Failed writing next id in export tab\n");        
+        return false;
+    }
 
     // write columns
     current_col = table->first_col;
     for(i=0; i<table->col_count; i++){
-        if(!export_col(output_file, output_file_name, current_col)) return false;
+        if(!export_col(output_file, output_file_name, current_col)){ 
+        printf("Failed writing cols in export tab\n");        
+        return false;
+    }
         current_col=current_col->next_col;
     }
 
@@ -276,7 +310,10 @@ bool export_table(FILE* output_file, char* output_file_name, Table* table){
         // write rows
         current_row = table->first_row;
         for(i=0; i<table->row_count; i++){
-            if(!export_row(output_file, output_file_name, current_row)) return false;
+            if(!export_row(output_file, output_file_name, current_row)){ 
+        printf("Failed writing rows in export tab\n");        
+        return false;
+    }
             current_row=current_row->next_row;
         }
     }
@@ -285,7 +322,10 @@ bool export_table(FILE* output_file, char* output_file_name, Table* table){
     if(table->hash_table_count != 0){
         current_ht = table->first_hash_table;
         for(i=0; i<table->hash_table_count; i++){
-            if(!export_hash_table(output_file, output_file_name, current_ht, table)) return false;
+            if(!export_hash_table(output_file, output_file_name, current_ht, table)){ 
+        printf("Failed writing ht in export tab\n");        
+        return false;
+    }
             current_ht=current_ht->next_hash_table;
         }
     }
@@ -312,7 +352,7 @@ void export_db(char* output_file_name, Table* first_table){
     // open file to write
     output_file = fopen(filename_with_ext, "wb");
     if(!output_file){
-        fprintf(stderr, "Export error: failed to create '%s'.\n\n", filename_with_ext);
+        fprintf(stderr, "Exportation error: unable to write to '%s', exportation aborted (cant fopen).\n\n", filename_with_ext);
         free(filename_with_ext);
         filename_with_ext = NULL;
         return;
@@ -321,6 +361,7 @@ void export_db(char* output_file_name, Table* first_table){
     // write number of tables in db
     written = fwrite(&table_count, sizeof(int), 1, output_file);
     if(!write_succeed(written, 1, filename_with_ext)){
+        printf("Failed writing tab count in export col\n");        
         fclose(output_file);
         free(filename_with_ext);
         filename_with_ext = NULL;
@@ -349,6 +390,7 @@ void export_db(char* output_file_name, Table* first_table){
     }
 
     fclose(output_file);
+    output_file = NULL;
     printf("Current database exported to '%s' successfully.\n\n", filename_with_ext);
     
     free(filename_with_ext);
