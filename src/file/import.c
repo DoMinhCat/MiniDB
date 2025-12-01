@@ -237,11 +237,11 @@ bool import_row(FILE* import_file, char* import_name, Table* table, Row** last_r
 
     // calloc data lists
     int_list = (int**)calloc(int_count, sizeof(int*));
-    assert(int_list!=NULL);
+    if(int_count!=0) assert(int_list!=NULL);
     double_list = (double**)calloc(double_count, sizeof(double*));
-    assert(double_list!=NULL);
+    if(double_count!=0) assert(double_list!=NULL);
     str_list = (char**)calloc(str_count, sizeof(char*));
-    assert(str_list!=NULL);
+    if(str_count!=0) assert(str_list!=NULL);
     
     // int list
     for(i=0; i<int_count; i++){

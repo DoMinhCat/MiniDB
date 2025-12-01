@@ -95,24 +95,39 @@ bool export_row(FILE* output_file, char* output_file_name, Row* row){
 
     // int count
     written = fwrite(&row->int_count, sizeof(int), 1, output_file);
-    if(!write_succeed(written, 1, output_file_name)) return false;
+    if(!write_succeed(written, 1, output_file_name)) {
+        printf("Failed to write int count in export row");
+        return false;
+    }
     // double count
     written = fwrite(&row->double_count, sizeof(int), 1, output_file);
-    if(!write_succeed(written, 1, output_file_name)) return false;
+    if(!write_succeed(written, 1, output_file_name)) {
+        printf("Failed to write douebl count in export row");
+        return false;
+    }
     // str count
     written = fwrite(&row->str_count, sizeof(int), 1, output_file);
-    if(!write_succeed(written, 1, output_file_name)) return false;
+    if(!write_succeed(written, 1, output_file_name)) {
+        printf("Failed to write str count in export row");
+        return false;
+    }
 
     // int list
     for(i=0; i<row->int_count; i++){
         // null marker 
         null_marker = row->int_list[i] ? 1 : 0;
         written = fwrite(&null_marker, sizeof(unsigned char), 1, output_file);
-        if(!write_succeed(written, 1, output_file_name)) return false;
+        if(!write_succeed(written, 1, output_file_name)) {
+            printf("Failed to write int marker in export row");
+            return false;
+        }
         // write value if not null
         if(row->int_list[i]){
             written = fwrite(row->int_list[i], sizeof(int), 1, output_file);
-            if(!write_succeed(written, 1, output_file_name)) return false;
+            if(!write_succeed(written, 1, output_file_name)) {
+                printf("Failed to write int item in export row");
+                return false;
+            }
         }
     }
 
@@ -121,11 +136,17 @@ bool export_row(FILE* output_file, char* output_file_name, Row* row){
         // null marker 
         null_marker = row->double_list[i] ? 1 : 0;
         written = fwrite(&null_marker, sizeof(unsigned char), 1, output_file);
-        if(!write_succeed(written, 1, output_file_name)) return false;
+        if(!write_succeed(written, 1, output_file_name)) {
+            printf("Failed to write double marker in export row");
+            return false;
+        }
         // write value if not null
         if(row->double_list[i]){
             written = fwrite(row->double_list[i], sizeof(double), 1, output_file);
-            if(!write_succeed(written, 1, output_file_name)) return false;
+            if(!write_succeed(written, 1, output_file_name)) {
+                printf("Failed to write double item in export row");
+                return false;
+            }
         }
     }
 
@@ -134,17 +155,26 @@ bool export_row(FILE* output_file, char* output_file_name, Row* row){
         // null marker 
         null_marker = row->str_list[i] ? 1 : 0;
         written = fwrite(&null_marker, sizeof(unsigned char), 1, output_file);
-        if(!write_succeed(written, 1, output_file_name)) return false;
+        if(!write_succeed(written, 1, output_file_name)) {
+            printf("Failed to write str marker in export row");
+            return false;
+        }
         
         // write if not null
         if(row->str_list[i]){
             len_str = strlen(row->str_list[i]) + 1;
             // len of str item
             written = fwrite(&len_str, sizeof(int), 1, output_file);
-            if(!write_succeed(written, 1, output_file_name)) return false;
+            if(!write_succeed(written, 1, output_file_name)) {
+                printf("Failed to write str item len in export row");
+                return false;
+            }
             // string value
-            written = fwrite(row->str_list[i], sizeof(char), (size_t)strlen, output_file);
-            if(!write_succeed(written, (size_t)strlen, output_file_name)) return false;
+            written = fwrite(row->str_list[i], sizeof(char), (size_t)len_str, output_file);
+            if(!write_succeed(written, (size_t)len_str, output_file_name)) {
+                printf("Failed to write str item in export row");
+                return false;
+            }
         }
     }
     return true;
