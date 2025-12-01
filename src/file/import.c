@@ -573,32 +573,48 @@ void import_db(char* import_name){
     int read;
     int table_count;
     int i;
+    char* extension = ".bin";
+    char* filename_with_ext = NULL;
 
-    import_file = fopen(import_name, "rb");
+    //add the .bin extension
+    filename_with_ext = malloc(strlen(import_name) + strlen(extension) + 1);
+    assert(filename_with_ext != NULL);
+    strcpy(filename_with_ext, import_name);
+    strcat(filename_with_ext, extension);
+
+    import_file = fopen(filename_with_ext, "rb");
     if(!import_file){
-        fprintf(stderr, "Importation error: unable to read from '%s', importation aborted.\n\n", import_name);
+        fprintf(stderr, "Importation error: unable to read from '%s', importation aborted.\n\n", filename_with_ext);
         fprintf(stderr, "Tip: please restart the program to try importing again.\n\n");
+        free(filename_with_ext);
+        filename_with_ext = NULL;
         return;
     }
 
     // read metadata
     // table count
     read = fread(&table_count, sizeof(int), 1, import_file);
-    if(!read_succeed(read, 1, import_name)){
+    if(!read_succeed(read, 1, filename_with_ext)){
+        free(filename_with_ext);
+        filename_with_ext = NULL;
         fclose(import_file);
         return;
     }
 
     // read tables
     for(i=0; i<table_count; i++){
-        if(!import_table(import_file, import_name)){
+        if(!import_table(import_file, filename_with_ext)){
             free_db(first_table);
             first_table = NULL;
+            free(filename_with_ext);
+            filename_with_ext = NULL;
             fclose(import_file);
             return;
         }
     }
 
     fclose(import_file);
-    printf("Database imported from '%s' successfully.\n\n", import_name);
+    printf("Database imported from '%s' successfully.\n\n", filename_with_ext);
+    free(filename_with_ext);
+    filename_with_ext = NULL;
 }

@@ -57,7 +57,7 @@ int main(){
     if(import_export_choice == 'y' || import_export_choice == 'Y'){
         print_divider();
         do{
-            printf("\nChoose the binary file to be imported (with extension): ");
+            printf("\nChoose the binary file to be imported (without extension): ");
             import_name = read_file_name(file_buffer);
         } while(!import_name);
 
