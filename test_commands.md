@@ -4,7 +4,7 @@
 
 ```sql
 create table customers ( id int pk, name string unique, age int )
-create table orders ( order_id int pk, customer_id int fk references customers id, amount double )
+create table orders ( order_id int pk, customer_id int fk references customers id, amount double );
 ```
 
 ---
@@ -58,8 +58,6 @@ delete from customers where id = 2;
 delete from customers
 delete from customers where id = 1
 delete from customers where id = 3;
-
-delete from customers where
 ```
 
 ---

@@ -90,6 +90,7 @@ void free_hash_table(HashTable* hash_table){
 
 void free_table(Table* table){
     Col* current_col = table->first_col;
+    Col* tmp_col;
     Row* current_row = table->first_row;
     Row* tmp_row;
     HashTable* current_hash_table = table->first_hash_table;
