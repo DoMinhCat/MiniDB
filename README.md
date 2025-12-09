@@ -1,114 +1,150 @@
-# C_Final
+# MiniDB – C Final Project (ESGI)
 
-Projet final de C à ESGI
+A simplified **Relational Database Management System (SGBDR)** written entirely in **C**, implementing core database features such as table creation, insertion, selection, deletion, JOIN operations, and on-disk persistence.
 
-## Table of contents
-
-1. Project Description
-2. Pre-requisites
-
-    - Windows OS (for Makefile to work properly)
-    - gcc
-    - mingw32-make.exe
-3. Installation
-
-    ```shell
-    mingw32-make clean
-    mingw32-make
-    ./MiniDB.exe
-    ```
-
-4. Features
-
-    - Strings must not and does not need to be wrapped inside quotes or double quotes
-    - Table and column names are case sensitive
-    - Available types : int, string, and double
-    - Multiple commands execution supported, each command must be separated by a new-line character and the command chain must end with a semicolon
-    - Insert: values will be inserted in the order of which columns are created and all columns must be inserted (can't insert only 4 values into a table with 5 columns)
-    - Operators AND and OR are not available yet
-    - With SELECT using JOIN, if both tables have a column with the same name as the selected column, by default that column will refer to the first table
-    - With SELECT using both WHERE and JOIN, the WHERE column is assumed to belong to the first table. If both tables contain a column with the same name, avoid using such columns in the WHERE clause to prevent ambiguity.
-    - Tables can't be altered one created, altering must be done through deleting the table, recreate it and manually reinsert all data :)
-    - NOT NULL constraint is not available yet
-    - Only one primary key is allowed for each table => relation many-many not available yet
-    - Primary key and foreign key must be of type int or string, can't be 0 or negative if is int
-    - Primary key type INT auto-incrementation supported
-    - All foreign keys are ON DELETE RESTRICT
-    - The order of tables passed for DROP matters (foreign key constraint violation)
-    - "exit" or "quit" to exit the program
-
-    - Import file must be in the current directory
-
-    - Max col per table = 50
-    - Max length for str values 256 (\0 excluded)
-    - Max table = 100
-    - Max chars for table/col name = 100
-    - Row per table warning threshold = 10 000
-
-5. Usage
-
-    - `show tables;`
-    - `describe table tab1;`
-    - `delete from tab1 [where col1 = 6];`
-    - `drop table tab1 [, tab2, tab3,...];`
-    - `create table tab1 ( col1 int pk, col2 string fk references tab_to_refer col_to_refer, col3 double );`, spaces between parentheses are obligated for the program to parse the command correctly
-    - `insert into tab1 ( col1, col2 ) values ( val1, val2 );`
-    - `select ( col1, col2, col3 )/* from tab1 [join tab2 on col1 = col2] [where col1 = xyz];`, order of col1 and col2 in JOIN clause matters, col1 and col2 correspond to tab1 and tab2 respectively
-
-6. Technical choice clarification
-
-7. Contributors
-
-    - Minh Cat DO
-    - Paco ROBINET-CAMPOY
-    - Cheikh Ahmadou Bamba CISSE
+This project was developed as the final C assignment for **ESGI 2A3 (2025–2026)** by  
+**Minh Cat DO**, **Paco ROBINET-CAMPOY**, and **Cheikh Ahmadou Bamba CISSE**.
 
 ---
 
-Current quick start :
-gcc main.c ui/parser.c ui/create.c ui/delete.c ui/drop.c ui/insert.c ui/select.c ui/show.c ui/describe.c ui/helper_ui.c clean/cmd.c clean/db.c init/query.c init/db.c init/hash_table.c db/create.c db/helper_db.c db/select.c db/drop.c db/show.c db/insert.c db/describe.c db/where.c db/join.c db/delete.c global_var.c hash/hash.c file/export.c -o sb.exe
+## Table of Contents
 
-Commands to test:
+1. Project Description  
+2. Pre-requisites  
+3. Installation  
+4. Features  
+5. Usage  
+6. Technical Choices  
+7. Contributors
 
-create table customers ( id int pk, name string unique, age int )
-create table orders ( order_id int pk, customer_id int fk references customers id, amount double )
+---
 
-insert into customers ( id, name, age ) values ( 1, Alice, 30 )
-insert into customers ( id, name, age ) values ( 2, Bob, 25 )
-insert into customers ( id, name, age ) values ( 3, Carol, 40 )
-insert into customers ( id, name, age ) values ( 4, Dave, 50 )
-insert into customers ( id ) values ( 47 )
-insert into customers ( id ) values ( 48 )
+## 1. Project Description
 
-insert into orders ( order_id, customer_id, amount ) values ( 10, 1, 99.5 )
-insert into orders ( order_id, customer_id, amount ) values ( 11, 1, 20 )
-insert into orders ( order_id, customer_id, amount ) values ( 12, 3, 250.75 );
+MiniDB is a simulation of a lightweight relational database engine.  
+It supports a SQL-like commands, stored in memory through:
 
-select ( id, name ) from customers
-select ( id, name ) from customers where id = 2
-select ( id, name ) from customers where name = Alice
-select ( order_id, amount ) from orders where amount = 20.0;
+- Linked Lists (tables, columns, rows)
+- A Hash Table Index (O(1) average lookup for Primary Keys and Unique columns)
+- Dynamic memory management with strict malloc/free discipline
+- Binary file import/export for data persistence
+- Sort-Merge JOIN implementation for inter-table relationships
 
-select ( id, amount ) from customers join orders on id = customer_id
-select ( name, amount ) from customers join orders on id = customer_id;
+This engine is designed to simulate  the behavior of a minimal SGBD while preserving internal clarity, memory safety, and performance.
 
-select ( id, name, amount ) from customers join orders on id = customer_id where id = 1
-select ( id, name, amount ) from customers join orders on id = customer_id where amount = 250.75
-select ( name, amount ) from customers join orders on id = customer_id where name = Alice;
+---
 
-Edge cases:
-select ( id ) from customers join orders on id = customer_id    // select id will return id of customers even when orders also has id column
-select ( id, id ) from customers join orders on id = customer_id    // will only return id of customers
+## 2. Pre-requisites
 
-delete from customers where name = null
-delete from customers where id = 4
-delete from customers where id = 2;
+To build and run the project:
 
-delete from customers
-delete from customers where id = 1
-delete from customers where id = 3;
+- Windows OS (required for the provided Makefile)
+- gcc
+- mingw32-make.exe
 
-drop table customers, orders;
+---
 
-**Ideas to improve (if time allows)**
-    - Default constraint
+## 3. Installation
+
+```bash
+git clone https://github.com/DoMinhCat/MiniDB.git
+cd MiniDB/
+mingw32-make clean
+mingw32-make
+./MiniDB.exe
+```
+
+## 4. Features
+
+### General
+
+- No need to wrap string values in quotes (`Alice` instead of `"Alice"`).
+- Table and column names are case-sensitive.
+- Supported types: `int`, `string`, `double`.
+- Supports executing multiple commands, separated by newlines.
+- A command chain must end with a semicolon `;`.
+
+### Insert & Data Integrity
+
+- Values must follow the order of column creation.
+- All columns must be filled during insertion.
+- INT primary keys support auto-incrementation.
+- Primary and foreign keys must be int or string (int > 0).
+- UNIQUE and PRIMARY KEY indexed via hash table.
+- All foreign keys behave as ON DELETE RESTRICT.
+
+### Select
+
+- Basic projection and filtering supported.
+- JOIN implemented using Sort-Merge:
+    - For ambiguous column names shared by both tables, the first table wins.
+    - When combining JOIN and WHERE, the WHERE column belongs to the first table.
+- AND / OR not supported yet.
+
+### Architecture Limitations
+
+- Tables cannot be altered once created.
+- Row updates not supported - delete & reinsert instead.
+- NOT NULL/DEFAULT not implemented.
+- Only one primary key per table - no many-to-many relationship yet.
+- Drop order matters due to FK constraints.
+
+### File Import
+
+- Import files must be located in the current directory.
+
+### Internal Limits
+
+- Max columns per table: 50
+- Max string length: 256 chars
+- Max tables: 100
+- Max length for table/column names: 100
+- Row count warning at 10,000 rows (increase of execution time)
+
+### Program exit
+
+- Use `quit;` or `exit;`
+
+## 5. Usage
+
+- `create table tab1 ( col1 int pk, col2 string fk references tab_to_refer col_to_refer, col3 double );`  
+    Spaces between parentheses are required for correct parsing.
+
+- `show tables;`
+
+- `describe table tab1;`
+
+- `insert into tab1 ( col1, col2 ) values ( val1, val2 );`
+
+- `delete from tab1 [where col1 = 6];`
+
+- `drop table tab1 [, tab2, tab3,...];`
+
+- `select ( col1, col2, col3 ) from tab1 [join tab2 on col1 = col2] [where col1 = xyz];`  
+  Order of col1 and col2 in JOIN must match the order of tab1 and tab2 passed in the command 
+
+---
+
+## 6. Technical choice clarification
+
+MiniDB relies entirely on low-level C data structures:
+
+- Tables, rows, and columns implemented as **linked lists**
+- **Hash table** with chaining for PRIMARY KEY and UNIQUE indexing
+- Query parser fills a compact `Query` struct using a **union**
+- JOIN implemented using **Sort-Merge join**, optimized for linked lists
+- All operations performed **in-place** through pointer manipulation
+- Manual memory management with a dedicated cleanup module
+- Binary file import/export for full database persistence
+
+These design choices prioritize clarity, determinism, and performance within project constraints.
+
+---
+
+## 7. Contributors
+
+- Minh Cat DO  
+- Paco ROBINET-CAMPOY  
+- Cheikh Ahmadou Bamba CISSE
+
+*ESGI Paris 2025 - 2026*
