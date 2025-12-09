@@ -28,7 +28,7 @@ HashTable* init_hash_table(){
     hash_tab->col_name = NULL;
     hash_tab->next_hash_table = NULL;
 
-    // init each bucket, we will have bucket[0-66] = NULL, can be safely accessed and allocated later
+     
     for(int i=0; i<HASH_TABLE_SIZE; i++){
         hash_tab->bucket[i] = NULL;
     }

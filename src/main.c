@@ -46,7 +46,6 @@ int main(){
     printf("Please refer to README.md for usage and additional information.\n");
     print_divider();
 
-    // Prompt for file import
     do{
         printf("Do you want to import an existing database, do it now or never (y/n) : ");
         scanf(" %c", &import_export_choice);
@@ -73,15 +72,11 @@ int main(){
         print_divider();
     }
 
-    // Infinite loop to get user's command
     while(1) {
         printf(">>> ");
-        
-        // Read all cmds
         batch_input = read_batch_cmd(batch_buffer);
         if (batch_input == NULL) continue;
         
-        // Split into individual commands
         commands = split_commands(batch_input, &cmd_count);
         if (cmd_count == 0) {
             free(batch_input);
@@ -89,15 +84,11 @@ int main(){
         }
         
         printf("\n");
-        // Execute each command
         for (int i = 0; i < cmd_count; i++) {
             parser_output = parse_cmd(commands[i]);
             
-            // Check exit/quit
             if (parser_output->cmd_type == EXIT) {
-                // Free current command first
                 free(commands[i]);
-                // Free all remaining commands
                 for (int j = i + 1; j < cmd_count; j++) {
                     free(commands[j]);
                 }
@@ -108,14 +99,12 @@ int main(){
                 break; 
             }
             
-            // Check invalid syntax
             if (parser_output->cmd_type == INVALID) {
                 free_query(&parser_output);
                 free(commands[i]);
                 continue; 
             }
             
-            // Execute commands
             switch (parser_output->cmd_type) {
             case SHOW:
                 show(parser_output);
@@ -133,7 +122,6 @@ int main(){
                 select(parser_output);
                 break;
             case DELETE:
-                // Without WHERE clause - skip confirmation in batch mode if multiple commands
                 if (!parser_output->params.delete_params.condition_column) {
                     if (cmd_count == 1) {
                         printf("Confirm deletion of all rows from '%s' table, press 'y' to proceed (cancel on default): ", 
@@ -147,7 +135,6 @@ int main(){
                             printf("Execution of DELETE statement aborted.\n\n");
                         }
                     } else {
-                        // In batch mode, auto-skip for safety
                         printf("Warning: DELETE without WHERE in batch mode - skipping for safety.\n");
                     }
                 } else {
@@ -168,7 +155,6 @@ int main(){
                         printf("Execution of DROP statement aborted.\n\n");
                     }
                 } else {
-                    // In batch mode, auto-skip for safety
                     printf("Warning: DROP in batch mode - skipping for safety.\n");
                 }
                 break;
@@ -191,7 +177,6 @@ int main(){
         }
     }
 
-    // Prompt for db export
     do {
         printf("Do you want to export the current database, do it now or never (y/n) : ");
         scanf(" %c", &import_export_choice);
@@ -218,7 +203,6 @@ int main(){
         print_divider();
     }
 
-    // free all db struct before exit
     free_db(first_table);
     first_table = NULL;
 

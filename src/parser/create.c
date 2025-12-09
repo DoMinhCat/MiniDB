@@ -16,9 +16,9 @@ Group 2 ESGI 2A3
 
 void parse_create(Query** query){
     char* token;
-    // get column names, type, pk/fk
+     
     char* col_list = NULL;
-    char* col_def = NULL;        // single column definition (e.g., "col int pk")
+    char* col_def = NULL;         
     char* tmp_col_def = NULL;
     char* col_name = NULL;
     char* col_type = NULL;
@@ -31,24 +31,24 @@ void parse_create(Query** query){
 
     (*query)->cmd_type = CREATE;
 
-    // check TABLE
+     
     token = strtok(NULL, " \t");
     if(!contain_key_word(token, "TABLE", query, "CREATE")){
         return;
     }
 
-    // get table name to create
+     
     token = strtok(NULL, " \t");
     if(!contain_param(token, query, "1 table name is required for CREATE statement")){
         return;
     }
 
-    //check max length
+     
     if(exceed_max_len(token, query, TABLE_NAME_MAX, "table name")){
         return;
     }
 
-    // check reserved keyword and special chars
+     
     if(!is_valid_identifier(token, query)){
         return;
     }
@@ -56,7 +56,7 @@ void parse_create(Query** query){
     (*query)->params.create_params.table_name = strdup(token);
     assert((*query)->params.create_params.table_name != NULL);
 
-    // check '('
+     
     token = strtok(NULL, " \t");
     if(!contain_key_word(token, "(", query, (*query)->params.create_params.table_name)){
         return;
@@ -65,14 +65,14 @@ void parse_create(Query** query){
     (*query)->params.create_params.fk_count = 0;
     (*query)->params.create_params.col_count = 0;
     
-    // get col_list
+     
     col_list = strtok(NULL, ")");
     extra_cmd = strtok(NULL, "\n");
     if(!contain_param(col_list, query, "at least 1 column is required for CREATE statement")){
         return;
     } 
 
-    // get column definitions inside parentheses
+     
     col_def = strtok_r(col_list, ",", &saveptr1);
 
     while(col_def != NULL){

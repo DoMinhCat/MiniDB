@@ -17,23 +17,23 @@ void parse_delete(Query** query){
 
     (*query)->cmd_type = DELETE;
 
-    // check FROM
+     
     token = strtok(NULL, " \t");
     if(!contain_key_word(token, "FROM", query, "DELETE")) return;
 
-    // check table name
+     
     token = strtok(NULL, " \n");
     if(!contain_param(token, query, "1 table is required for DELETE statement")) return;
     (*query)->params.delete_params.table_name = strdup(token);
     assert((*query)->params.delete_params.table_name != NULL);
 
-    // get WHERE (optional)
+     
     extra_where_clause = strtok(NULL, "\n");
 
     if (extra_where_clause) {
         token = strtok(extra_where_clause, " \t");
         if(strcasecmp(token, "WHERE") == 0){
-            // get col name
+             
             token = strtok(NULL, " \t");
             check_where(token, query);
             if((*query)->cmd_type == INVALID) return;

@@ -29,7 +29,7 @@ void describe_table(Query* query){
     int max_width = MAX_TABLE_WIDTH;
     int i;
 
-    // check if table exists
+     
     table = get_table_by_name(query->params.describe_params.table_name);
 
     if(!table){
@@ -37,13 +37,13 @@ void describe_table(Query* query){
         return;
     } 
 
-    // Print header
+     
     current_width = 0;
     char* headers[] = {"Column", "Type", "Constraint", "Table of Reference", "Column of Reference"};
     int printed_headers = 0;
     
     for(i = 0; i < num_cols; i++) {
-        if(current_width + col_width + 3 > max_width && i > 0) {  // +3 for " | "
+        if(current_width + col_width + 3 > max_width && i > 0) {   
             printf("| ...");
             break;
         }
@@ -58,7 +58,7 @@ void describe_table(Query* query){
     }
     printf(" |\n");
 
-    // Print separator line
+     
     current_width = 0;
     for(i = 0; i < printed_headers; i++) {
         if(i == 0) {
@@ -76,7 +76,7 @@ void describe_table(Query* query){
     }
     printf("-|\n");
 
-    // Print data rows
+     
     for(current_col=table->first_col; current_col!=NULL; current_col = current_col->next_col){
         name = strdup(current_col->name);
         assert(name!=NULL);
@@ -102,7 +102,7 @@ void describe_table(Query* query){
             assert(col_refer!=NULL);
         } else col_refer = NULL;
 
-        // Print row with truncation check
+         
         current_width = 0;
         char* values[] = {name, type, constraint, table_refer?table_refer:"None", col_refer?col_refer:"None"};
         char truncated[col_width + 1];
@@ -113,7 +113,7 @@ void describe_table(Query* query){
                 break;
             }
             
-            // Truncate value if needed
+             
             if((int)strlen(values[i]) > col_width) {
                 strncpy(truncated, values[i], col_width - 3);
                 truncated[col_width - 3] = '\0';

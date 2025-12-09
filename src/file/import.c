@@ -89,7 +89,7 @@ bool import_col(FILE* import_file, char* import_name,Table* table, Col** last_co
     ColConstraintType col_constraint;
     Col* new_col = NULL;
 
-    // read col name
+     
     read = fread(&len_col_name, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)) return false;
 
@@ -102,13 +102,13 @@ bool import_col(FILE* import_file, char* import_name,Table* table, Col** last_co
         return false;
     }
 
-    //col_type
+     
     read = fread(&col_type, sizeof(ColType), 1, import_file);
     if(!read_succeed(read, 1, import_name)) {
         free_for_import_col(&col_name, &ref_tab_name, &ref_col_name);
         return false;
     }
-    // constraint
+     
     read = fread(&col_constraint, sizeof(ColConstraintType), 1, import_file);
     if(!read_succeed(read, 1, import_name)) {
         free(col_name);
@@ -116,7 +116,7 @@ bool import_col(FILE* import_file, char* import_name,Table* table, Col** last_co
         return false;
     }
 
-    // tab and col this col references (still read if it is 0 to consume the int)
+     
     read = fread(&len_ref_tab, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)) {
         free_for_import_col(&col_name, &ref_tab_name, &ref_col_name);
@@ -131,7 +131,7 @@ bool import_col(FILE* import_file, char* import_name,Table* table, Col** last_co
             return false;
         }
     }
-    // col 
+     
     read = fread(&len_ref_col, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)) {
             free_for_import_col(&col_name, &ref_tab_name, &ref_col_name);
@@ -147,7 +147,7 @@ bool import_col(FILE* import_file, char* import_name,Table* table, Col** last_co
         }
     }
 
-    // init and set col info
+     
     new_col = init_col();
 
     new_col->name = strdup(col_name);
@@ -164,14 +164,14 @@ bool import_col(FILE* import_file, char* import_name,Table* table, Col** last_co
         assert(new_col->refer_col!=NULL);
     }
 
-    // add to col linked list of table
+     
     if (table->first_col == NULL || table->first_col->name == NULL) {
-        // free the dummy if it exists
+         
         if (table->first_col && table->first_col->name == NULL) free_col(table->first_col);
         table->first_col = new_col;
         *last_col = table->first_col;
     } else {
-        // append to the end
+         
         (*last_col)->next_col = new_col;
         *last_col = new_col;
     }
@@ -227,7 +227,7 @@ bool import_row(FILE* import_file, char* import_name, Table* table, Row** last_r
     unsigned char null_marker;
     Row* new_row = NULL;
 
-    // read counts
+     
     read = fread(&int_count, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)) return false;
     read = fread(&double_count, sizeof(int), 1, import_file);
@@ -235,7 +235,7 @@ bool import_row(FILE* import_file, char* import_name, Table* table, Row** last_r
     read = fread(&str_count, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)) return false;
 
-    // calloc data lists
+     
     int_list = (int**)calloc(int_count, sizeof(int*));
     if(int_count!=0) assert(int_list!=NULL);
     double_list = (double**)calloc(double_count, sizeof(double*));
@@ -243,7 +243,7 @@ bool import_row(FILE* import_file, char* import_name, Table* table, Row** last_r
     str_list = (char**)calloc(str_count, sizeof(char*));
     if(str_count!=0) assert(str_list!=NULL);
     
-    // int list
+     
     for(i=0; i<int_count; i++){
         read = fread(&null_marker, sizeof(unsigned char), 1, import_file);
         if(!read_succeed(read, 1, import_name)){
@@ -261,7 +261,7 @@ bool import_row(FILE* import_file, char* import_name, Table* table, Row** last_r
         }
     }
 
-    // double list
+     
     for(i=0; i<double_count; i++){
         read = fread(&null_marker, sizeof(unsigned char), 1, import_file);
         if(!read_succeed(read, 1, import_name)){
@@ -280,7 +280,7 @@ bool import_row(FILE* import_file, char* import_name, Table* table, Row** last_r
     }
 
     int len_str_item;
-    // str list
+     
     for(i=0; i<str_count; i++){
         read = fread(&null_marker, sizeof(unsigned char), 1, import_file);
         if(!read_succeed(read, 1, import_name)){
@@ -303,18 +303,18 @@ bool import_row(FILE* import_file, char* import_name, Table* table, Row** last_r
         }
     }
     
-    // set data lists to row
+     
     new_row = init_row();
     new_row->int_list = int_list;
     new_row->double_list = double_list;
     new_row->str_list = str_list;
 
-    // set pointer
+     
     if (!table->first_row) {
         table->first_row = new_row;
         *last_row = table->first_row;
     } else {
-        // append to the end
+         
         (*last_row)->next_row = new_row;
         *last_row = new_row;
     }
@@ -332,17 +332,17 @@ bool import_hash_node(FILE* import_file, char* import_name, Table* table, HashTa
     int i;
     Row* current_row = NULL;
 
-    // prev row index
+     
     read = fread(&prev_row_index, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)) return false; 
-    // row index
+     
     read = fread(&row_index, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)) return false; 
 
-    // original val len
+     
     read = fread(&len_val, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)) return false; 
-    // original val
+     
     val = (char*)malloc(sizeof(char) * len_val);
     assert(val!=NULL);
     read = fread(val, sizeof(char), len_val, import_file);
@@ -352,10 +352,10 @@ bool import_hash_node(FILE* import_file, char* import_name, Table* table, HashTa
         return false;
     }
 
-    // init and set hash node
+     
     new_node = init_node();
 
-    // prev row and row (first_row index = 0 when export)
+     
     if(prev_row_index==-1){
         new_node->prev_row = NULL;
         new_node->row = table->first_row;
@@ -369,16 +369,16 @@ bool import_hash_node(FILE* import_file, char* import_name, Table* table, HashTa
         new_node->row = current_row->next_row;
     }
 
-    // set pointer of node
+     
     if(!ht->bucket[key]){
         ht->bucket[key] = new_node;
     }else{
-        // insert at head
+         
         new_node->next_node = ht->bucket[key];
         ht->bucket[key] = new_node;
     }
 
-    // original val
+     
     new_node->original_value = strdup(val);
     assert(new_node->original_value!=NULL);
 
@@ -395,7 +395,7 @@ bool import_hash_table(FILE* import_file, char* import_name, Table* table, HashT
     HashTable* new_ht = NULL;
     int i, j;
 
-    // read col name
+     
     read = fread(&len_col_name, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)) return false;
 
@@ -409,14 +409,14 @@ bool import_hash_table(FILE* import_file, char* import_name, Table* table, HashT
         return false;
     }
 
-    // init ht and set col name
+     
     new_ht = init_hash_table();
 
     new_ht->col_name = strdup(col_name);
     assert(new_ht->col_name!=NULL);
 
     for(i=0; i<HASH_TABLE_SIZE; i++){
-        // read number of nodes in current bucket
+         
         read = fread(&node_count, sizeof(int), 1, import_file);
         if(!read_succeed(read, 1, import_name)){
             free(col_name);
@@ -433,14 +433,14 @@ bool import_hash_table(FILE* import_file, char* import_name, Table* table, HashT
         }
     }
 
-    // add ht to table
+     
     if (table->first_hash_table == NULL || table->first_hash_table->col_name == NULL) {
-        // free the dummy if it exists
+         
         if (table->first_hash_table && table->first_hash_table->col_name == NULL) free_hash_table(table->first_hash_table);
         table->first_hash_table = new_ht;
         *last_ht = table->first_hash_table;
     } else {
-        // append to the end
+         
         (*last_ht)->next_hash_table = new_ht;
         *last_ht = new_ht;
     }
@@ -465,7 +465,7 @@ bool import_table(FILE* import_file, char* import_name){
     Row* last_row = NULL;
     HashTable* last_ht = NULL;
 
-    // tab name
+     
     read = fread(&len_tab_name, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)) {
         printf("Failed reading tab name len");
@@ -483,7 +483,7 @@ bool import_table(FILE* import_file, char* import_name){
         return false;
     }
 
-    // num of col
+     
     read = fread(&col_count, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)){
         free(tab_name);
@@ -491,7 +491,7 @@ bool import_table(FILE* import_file, char* import_name){
         tab_name = NULL;
         return false;
     }
-    // num of row
+     
     read = fread(&row_count, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)){
         free(tab_name);
@@ -499,7 +499,7 @@ bool import_table(FILE* import_file, char* import_name){
         tab_name = NULL;
         return false;
     }
-    // num of ht
+     
     read = fread(&ht_count, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, import_name)){
         free(tab_name);
@@ -507,7 +507,7 @@ bool import_table(FILE* import_file, char* import_name){
         printf("Failed reading ht num");
         return false;
     }
-        // next_id
+         
         read = fread(&next_id, sizeof(int), 1, import_file);
         if(!read_succeed(read, 1, import_name)){
         free(tab_name);
@@ -516,7 +516,7 @@ bool import_table(FILE* import_file, char* import_name){
         return false;
     }
 
-    // init table and set info read above
+     
     new_tab = init_table();
 
     new_tab->name = strdup(tab_name);
@@ -526,7 +526,7 @@ bool import_table(FILE* import_file, char* import_name){
     new_tab->hash_table_count = ht_count;
     new_tab->next_id = next_id;
 
-    // import cols
+     
     for(i=0; i<col_count; i++){
         if(!import_col(import_file, import_name, new_tab, &last_col)){
             free(tab_name);
@@ -536,7 +536,7 @@ bool import_table(FILE* import_file, char* import_name){
         }
     }
 
-    // import rows
+     
     for(i=0; i<row_count; i++){
         if(!import_row(import_file, import_name, new_tab, &last_row)){
             free(tab_name);
@@ -546,7 +546,7 @@ bool import_table(FILE* import_file, char* import_name){
         }
     }
 
-    // import hash tables
+     
     for(i=0; i<ht_count; i++){
         if(!import_hash_table(import_file, import_name, new_tab, &last_ht)){
             free(tab_name);
@@ -556,7 +556,7 @@ bool import_table(FILE* import_file, char* import_name){
         }
     }
 
-    // add table to linked list
+     
     if(!first_table) first_table = new_tab;
     else{
         current_tab = get_last_table(first_table);
@@ -576,7 +576,7 @@ void import_db(char* import_name){
     char* extension = ".bin";
     char* filename_with_ext = NULL;
 
-    //add the .bin extension
+     
     filename_with_ext = malloc(strlen(import_name) + strlen(extension) + 1);
     assert(filename_with_ext != NULL);
     strcpy(filename_with_ext, import_name);
@@ -591,8 +591,8 @@ void import_db(char* import_name){
         return;
     }
 
-    // read metadata
-    // table count
+     
+     
     read = fread(&table_count, sizeof(int), 1, import_file);
     if(!read_succeed(read, 1, filename_with_ext)){
         free(filename_with_ext);
@@ -601,7 +601,7 @@ void import_db(char* import_name){
         return;
     }
 
-    // read tables
+     
     for(i=0; i<table_count; i++){
         if(!import_table(import_file, filename_with_ext)){
             free_db(first_table);

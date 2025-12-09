@@ -33,9 +33,9 @@ typedef enum ColType{
 } ColType;
 
 typedef struct Row{
-    int **int_list; // unset int will be NULL, int_list[int_count][0]
+    int **int_list;  
     char **str_list;
-    double **double_list; // unset double will be NULL, double_list[double_count][0]
+    double **double_list;  
 
     int int_count;
     int str_count;
@@ -49,9 +49,8 @@ typedef struct Col{
     ColType type;
     ColConstraintType constraint;
 
-    // for referential integrity check upon insert
-    char *refer_table; // table that fk col references
-    char *refer_col;   // col of table that fk col references
+    char *refer_table;
+    char *refer_col;
 
     struct Col *next_col;
 } Col;
@@ -60,7 +59,7 @@ typedef struct Table{
     char *name;
     Row *first_row;
     Col *first_col;
-    HashTable *first_hash_table; // linked list of hash tables of this table
+    HashTable *first_hash_table;
     int next_id;
 
     int col_count;
@@ -70,15 +69,12 @@ typedef struct Table{
     struct Table *next_table;
 } Table;
 
-// linked list of filtered rows for predicate pushdown for SELECT with WHERE/JOIN
 typedef struct FilteredRow{
     Row* row;
 
-    // list of joined data if JOIN clause provided
     int** int_joined_list;
     char** str_joined_list;
     double** double_joined_list;
-    // to free above lists
     int int_join_count;
     int double_join_count;
     int str_join_count;
@@ -86,14 +82,13 @@ typedef struct FilteredRow{
     struct FilteredRow* next_filtered_row;
 } FilteredRow;
 
-// for join
+ 
 typedef struct SelectedColInfo{
     ColType type;    
-    int table_id; // 1 = tab1, 2 = tab2 (joined table)
+    int table_id; 
     int data_index;   
 } SelectedColInfo;
 
-// prototypes
 void create_table(Query *query);
 void drop_table(Query *query);
 void insert(Query *query);

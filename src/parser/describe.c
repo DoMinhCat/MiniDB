@@ -16,17 +16,17 @@ void parse_describe(Query** query){
 
     (*query)->cmd_type = DESCRIBE;
 
-    //check TABLES
+     
     token = strtok(NULL, " \t");
     if(!contain_key_word(token, "TABLE", query, "DESCRIBE")) return;
 
-    // check table name
+     
     token = strtok(NULL, " \t");
     if(!contain_param(token, query, "1 table name is required for DESCRIBE statement")) return;
     (*query)->params.describe_params.table_name = strdup(token);
     assert((*query)->params.describe_params.table_name!=NULL);
 
-    // check extra invalid cmd
+     
     token = strtok(NULL, " \t");
     if(token){
         check_end_of_cmd(token, query, "DESCRIBE statement");

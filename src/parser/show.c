@@ -14,11 +14,11 @@ void parse_show(Query** query){
     char* token = NULL;
     (*query)->cmd_type = SHOW;
 
-    //check TABLES
+     
     token = strtok(NULL, " \t");
     if(!contain_key_word(token, "TABLES", query, "SHOW")) return;
 
-    // check extra invalid cmd
+     
     token = strtok(NULL, " \t");
     if(token){
         check_end_of_cmd(token, query, "SHOW statement");

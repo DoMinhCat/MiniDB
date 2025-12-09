@@ -15,7 +15,6 @@ Group 2 ESGI 2A3
 #include "parser.h"
 
 bool contains_visible_char(char* str_to_check){
-    // function to check at the end of commands if it is white spaces or invalid extra commands
     int i;
 
     if(!str_to_check) return false;
@@ -24,7 +23,7 @@ bool contains_visible_char(char* str_to_check){
         if(!isspace(str_to_check[i])) return true;
     }
 
-    return false; // all is white spaces
+    return false;
 }
 
 void check_end_of_cmd(char* last_token, Query** query, char* current_stmt){
@@ -58,12 +57,10 @@ bool contain_param(char* token, Query** query, char* err_msg){
 }
 
 void check_where(char* token, Query** query){
-    // check for the WHERE clause : WHERE x = y
-    // when using this, need to check if cmd_type is INVALID at the end, if yes then return query
+     
 
     char error_msg[200];
 
-    //check condition column
     if(!contain_param(token, query, "at least 1 column is required for WHERE clause")) return;
     if((*query)->cmd_type == SELECT) {
         (*query)->params.select_params.condition_col = strdup(token);
@@ -79,7 +76,6 @@ void check_where(char* token, Query** query){
         return;
     }
 
-    //check =
     token = strtok(NULL, " \t");
     if((*query)->cmd_type == SELECT){
         if(!contain_key_word(token, "=", query, (*query)->params.select_params.condition_col)) return;
@@ -87,7 +83,6 @@ void check_where(char* token, Query** query){
         if(!contain_key_word(token, "=", query, (*query)->params.delete_params.condition_column)) return;
     }
 
-    //check condition value of where
     token = strtok(NULL, " \t");
     if((*query)->cmd_type == SELECT) sprintf(error_msg, "1 value is required for '%s' column  in WHERE clause", (*query)->params.select_params.condition_col);
     else if((*query)->cmd_type == DELETE) sprintf(error_msg, "1 value is required for '%s' column  in WHERE clause", (*query)->params.delete_params.condition_column);
@@ -107,7 +102,6 @@ void check_where(char* token, Query** query){
         return;
     }
                 
-    // check for extra invalid command
     token = strtok(NULL, "\n");
     if(token){
         check_end_of_cmd(token, query, "WHERE clause");
@@ -125,7 +119,6 @@ bool exceed_max_len(char* token, Query** query, int max_len, char* current_str){
 }
 
 bool is_valid_identifier(char* token, Query** query){
-    // check that value doesn't match reserved key word
     char* banned_name_list[] = {
         "SELECT", "INSERT", "VALUES", "DROP", "DELETE", "TABLE", "SHOW", "DESCRIBE", "TABLES", "PK", "FK", "UNIQUE", 
         "FROM", "INTO", "WHERE", "JOIN", "ON", "INT", "STRING", "DOUBLE"};
@@ -138,7 +131,7 @@ bool is_valid_identifier(char* token, Query** query){
             return false;
         }
     }
-    // check no special character allowed
+    
     for(i=0; i<(int)strlen(token); i++){
         if(!isalnum(token[i]) && token[i] != '_'){
             (*query)->cmd_type = INVALID;

@@ -11,7 +11,7 @@ Group 2 ESGI 2A3
 #include "../../include/parser.h"
 #include "../../include/ini.h"
 
-// safely initialise Query struct
+ 
 Query* init_query(){
     Query* query = NULL;
     assert((query = (Query*)malloc(sizeof(Query))) != NULL);

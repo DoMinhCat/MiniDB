@@ -22,8 +22,6 @@ Group 2 ESGI 2A3
 #include "../../include/clean.h"
 
 bool table_exists(char* table_name){
-    // check for table existence, print error if not.
-    // ex: if(!table_exists(tb_name)) return;
     Table* table = get_table_by_name(table_name);
     if(!table) {
         fprintf(stderr, "Execution error: '%s' table not found.\n\n", table_name);
@@ -33,7 +31,6 @@ bool table_exists(char* table_name){
 }
 
 bool col_exists(Table* table, char* col_name){
-    // same as table_exists above but for col
     Col* col = get_col_by_name(table, col_name);
     if(!col) {
         fprintf(stderr, "Execution error: '%s' column  not found.\n\n", col_name);
@@ -50,8 +47,6 @@ int* get_fk_col_list_index(Query* query){
     Example : 
     col_list = col1 pk, col2, col3 fk, col4, col5 fk
     fk_index = 2, 4 -> which are indexes of col3 and col5 in col_list
-
-    Returns NULL pointer if there is error
     */
     int fk_count = query->params.create_params.fk_count;
     int* res = (int*)malloc(sizeof(int) * fk_count);
@@ -73,18 +68,17 @@ int* get_fk_col_list_index(Query* query){
         break;
     
     default:
-        free(res); // will return NULL if error
+        free(res);  
         break;
     }
     
-    // handle an edge case that will probably never happens just to safe guard parse_create() if it has bug :))
     if(current_index != fk_count) free(res);
 
     return res;
 }
 
 Table* get_last_table(Table* first_table){
-    // this function assumes there are at least 1 table already
+     
     Table* current_table = first_table;
     
     while(current_table->next_table){
@@ -93,28 +87,8 @@ Table* get_last_table(Table* first_table){
     return current_table;
 }
 
-// NOTE: DON'T DELETE, maybe will need this in the future for delete/where/select?
-// Col* get_last_col(Col* first_col){
-//     // this function assumes there are at least 1 col already
-//     Col* current_col = first_col;
-    
-//     while(current_col->next_col){
-//         current_col = current_col->next_col;
-//     }
-//     return current_col;
-// }
-
-// HashTable* get_last_hash_table(HashTable* first_ht){
-//     // this function assumes there are at least 1 hash table already
-//     HashTable* current_ht = first_ht;
-    
-//     while(current_ht->next_hash_table){
-//         current_ht = current_ht->next_hash_table;
-//     }
-//     return current_ht;
-// }
 Row* get_last_row(Row* first_row){
-    // this function assumes there are at least 1 row already
+     
     Row* current_row = first_row;
     
     while(current_row->next_row){
@@ -124,7 +98,6 @@ Row* get_last_row(Row* first_row){
 }
 
 Row* get_prev_row(Table* table, Row* target) {
-    // Target is first row
     if (table->first_row == target)
         return NULL;
 
@@ -132,11 +105,10 @@ Row* get_prev_row(Table* table, Row* target) {
     while (curr && curr->next_row != target)
         curr = curr->next_row;
 
-    return curr;  // returns NULL if not found
+    return curr; 
 }
 
 Table* get_table_by_name(char* table_name) {
-    // this func return pointer to the table having input name
     Table* current = first_table;
 
     while (current != NULL) {
@@ -149,7 +121,6 @@ Table* get_table_by_name(char* table_name) {
 }
 
 Col* get_col_by_name(Table* table, char* col_name) {
-    // return pointer to column with input name of a given table
     Col* current = table->first_col;
     
     while (current != NULL) {
@@ -169,7 +140,6 @@ HashTable* get_ht_by_col_name(HashTable* first_ht, char* col_name){
 }
 
 void* get_col_value(Table* table, Row* row, char* col_name, ColType col_type) {
-    // for SELECT : get the right pointer to data field of row based on requested col
     if (table == NULL || row == NULL || col_name == NULL) return NULL;
 
     int list_index = get_data_list_index(table, col_name);
@@ -248,13 +218,6 @@ void format_value_to_string(ColType col_type, void* value, char* buffer, size_t 
 }
 
 int get_data_list_index(Table* table, char* col_name){
-    // get the index of data list of Row for the corresponding type list
-    // use this to access to data field of row (same as SELECT col1) or to insert into the right place of the list of row struct
-    /* ex: 
-    col1 int, col2 str, col3 str, col4 int
-        0                            1
-    get_data_list_index(table, "col4") -> 1 (col4 is INT so col4 is has index 1 for INT col)
-    */
     Col* current = table->first_col;
     int i_int = -1;
     int i_str = -1;
@@ -277,21 +240,16 @@ int get_data_list_index(Table* table, char* col_name){
                 return i_double;
                 break;
             default:
-                return -1; // not gonna happen tho, all col type is INT/STR/DOUBLE
+                return -1;  
                 break;
             }
         }
         current = current->next_col;
     }
-    return -1; // if col not found
+    return -1;  
 }
 
 int compare_double(double val1, double val2){
-    /*safely compare double, used for where with double column (no hash table available)
-    return 0 if val1=val2
-    return 1 if val1>val2
-    return -1 if val1<val2
-    */
     double epsilon = DBL_EPSILON * 10.0;
 
     if (fabs(val1 - val2) <= epsilon) return 0;
@@ -300,11 +258,9 @@ int compare_double(double val1, double val2){
 }
 
 bool refer_val_exists(char* str_to_check, int val_to_check, char* ref_table_name, char* ref_col_name) {
-    // get hash table of referenced column
     HashTable* hash_tab = get_ht_by_col_name(get_table_by_name(ref_table_name)->first_hash_table, ref_col_name);
     Node* found_node = NULL;
 
-    // use exist_in_ht depending on type
     if (str_to_check != NULL) {
         found_node = exist_in_ht(hash_tab, 0, str_to_check);
         if (!found_node) {
@@ -320,22 +276,18 @@ bool refer_val_exists(char* str_to_check, int val_to_check, char* ref_table_name
             return false;
         }
     }
-    // value exists
+     
     return true;
 }
 
 bool pk_value_is_unique(char* str_to_check, int val_to_check, HashTable* hash_tab, char* constraint){
-    // this func check uniqueness with hash table lookup, use for pk and unique cols
     int sscanf_check = 0;
     int hashed_int;
     Node* current_hash_node = NULL;
 
-    // str value
     if(str_to_check!=NULL){
-        //hash and check uniqueness with hash table
-        hashed_int = hash_string(str_to_check); // this is the key 0-66
+        hashed_int = hash_string(str_to_check);  
 
-        // bucket null => no duplicate value, no need to check 
         if(hash_tab->bucket[hashed_int] != NULL){
             for(current_hash_node = hash_tab->bucket[hashed_int]; current_hash_node!=NULL; current_hash_node=current_hash_node->next_node){
                 if(strcmp(current_hash_node->original_value, str_to_check) == 0){
@@ -344,24 +296,19 @@ bool pk_value_is_unique(char* str_to_check, int val_to_check, HashTable* hash_ta
                 }
             }
         }
-        //all checks passed
         return true;
     
-    // int value
     }else{
-        // 0 and negative not allowed
         if(strcasecmp("PRIMARY KEY", constraint)==0 && val_to_check<=0){
             fprintf(stderr, "Execution error: values with PRIMARY KEY constraint must be 1 or larger.\n\n");
             return false;
         }
-        //hash and check uniqueness with hash table
-        hashed_int = hash_int(val_to_check); // this is the key 0-66
+        hashed_int = hash_int(val_to_check);  
         int val_db;
 
-        // bucket null => no duplicate value, no need to check 
         if(hash_tab->bucket[hashed_int] != NULL){
             for(current_hash_node = hash_tab->bucket[hashed_int]; current_hash_node!=NULL; current_hash_node=current_hash_node->next_node){
-                // convert back to int before cmp, no need strol because we are sure it is int converted to string when inserted and passed earlier checks
+                 
                 sscanf_check = sscanf(current_hash_node->original_value, "%d", &val_db); 
                 if(sscanf_check != 1){
                     fprintf(stderr, "Execution error: an error occured while hashing.\n\n");
@@ -373,7 +320,6 @@ bool pk_value_is_unique(char* str_to_check, int val_to_check, HashTable* hash_ta
                 }
             }
         }
-        //all checks passed
         return true;
     }
 }
@@ -392,19 +338,16 @@ bool str_to_int(char *str_val, int *int_output, char *col_name) {
     char *endptr;
     long long parsed_val = strtoll(str_val, &endptr, 10);
 
-    // check conversion error
     if (endptr == str_val || *endptr != '\0') {
         fprintf(stderr, "Execution error: invalid value '%s' for '%s' column type INT.\n\n", str_val, col_name);
         return false;
     }
 
-    // check overflow
     if (errno == ERANGE || parsed_val > INT_MAX || parsed_val < INT_MIN) {
         fprintf(stderr, "Execution error: incompatible size of '%s' for type INT.\n\n", str_val);
         return false;
     }
 
-    // store converted value
     *int_output = (int)parsed_val;
     return true;
 }
@@ -415,7 +358,6 @@ bool str_to_double(char *str_val, double *double_output, char *col_name) {
 
     double parsed_val = strtod(str_val, &endptr);
 
-    //Check conversion errors
     if (errno == ERANGE || isinf(parsed_val) || isnan(parsed_val) || endptr == str_val || *endptr != '\0') {
         fprintf(stderr, "Execution error: invalid value '%s' for '%s' column type DOUBLE.\n\n", str_val, col_name);
         return false;
@@ -438,7 +380,6 @@ SelectedColInfo* build_col_info_list(Table* tab1, Table* tab2, SelectParams* par
     assert((output_col_info = malloc(sizeof(SelectedColInfo) * list_size))!=NULL);
 
     if (select_all) {
-        // fill with columns from tab1
         current_col = tab1->first_col;
         while (current_col != NULL && out_i < list_size) {
             output_col_info[out_i].table_id = 1;
@@ -453,7 +394,6 @@ SelectedColInfo* build_col_info_list(Table* tab1, Table* tab2, SelectParams* par
             out_i++;
             current_col = current_col->next_col;
         }
-        // fill with columns from tab2
         current_col = tab2->first_col;
         while (current_col != NULL && out_i < list_size) {
             output_col_info[out_i].table_id = 2;
@@ -488,8 +428,6 @@ SelectedColInfo* build_col_info_list(Table* tab1, Table* tab2, SelectParams* par
 }
 
 bool str_to_col_type(Col* condition_col, char* condition_val, int* int_val, double* double_val, char** str_val){
-    // convert condition value (char*) to the correct type of column to compare
-
     switch (condition_col->type) {
     case INT:
         if(!str_to_int(condition_val, int_val, condition_col->name)) return false;
@@ -507,8 +445,6 @@ bool str_to_col_type(Col* condition_col, char* condition_val, int* int_val, doub
 }
 
 FilteredRow* copy_rows_to_filtered(Table* tab){
-    // copy linked list Row of a table to linked list of FilteredRow for JOIN operation
-
     if(!tab || !tab->first_row) return NULL;
 
     Row* current_row = NULL;
@@ -524,7 +460,7 @@ FilteredRow* copy_rows_to_filtered(Table* tab){
             head_list = new_node;
             last_node = head_list;
         } else {
-            // append to the end
+             
             last_node->next_filtered_row = new_node;
             last_node = new_node;
         }
@@ -533,20 +469,16 @@ FilteredRow* copy_rows_to_filtered(Table* tab){
 }
 
 FilteredRow* copy_data_lists_to_filtered(Row* row1, Row* row2){
-    // copy all data lists of 1 OR 2 rows into FilteredRow for later processing in JOIN and DELETE with WHERE
-
     FilteredRow* new_node = init_filtered_row();
     int i;
     int int_size = row2 ? row1->int_count + row2->int_count : row1->int_count;
     int double_size = row2 ? row1->double_count + row2->double_count : row1->double_count;
     int str_size = row2 ? row1->str_count + row2->str_count : row1->str_count;
 
-    // calloc
     assert((new_node->int_joined_list = (int**)calloc(int_size, sizeof(int*))) != NULL);
     assert((new_node->double_joined_list = (double**)calloc(double_size, sizeof(double*))) != NULL);
     assert((new_node->str_joined_list = (char**)calloc(str_size, sizeof(char*))) != NULL);
 
-    // int list
     for (i = 0; i < row1->int_count; ++i) {
         if(row1->int_list[i] != NULL){
             new_node->int_joined_list[i] = malloc(sizeof(int));
@@ -563,7 +495,6 @@ FilteredRow* copy_data_lists_to_filtered(Row* row1, Row* row2){
         }
     }
 
-    // double list
     for (i = 0; i < row1->double_count; ++i) {
         if(row1->double_list[i] != NULL){
             new_node->double_joined_list[i] = malloc(sizeof(double));
@@ -579,7 +510,6 @@ FilteredRow* copy_data_lists_to_filtered(Row* row1, Row* row2){
         }
     }
 
-    // str list
     for(i = 0; i < str_size; i++){
         if(row1->str_list[i]) new_node->str_joined_list[i] = strdup(row1->str_list[i]);
         else new_node->str_joined_list[i] = NULL;
@@ -593,8 +523,6 @@ FilteredRow* copy_data_lists_to_filtered(Row* row1, Row* row2){
 }
 
 bool ref_integrity_check_delete(Table* table, FilteredRow* rows_to_del_fr, bool delete_all){
-    // check if any col on any other table has value refering to the data of table to be deleted based on a list of filtered rows
-    
     Table* current_table = NULL;
     HashTable* ht_check = NULL;
     Node* value_exist;
@@ -605,21 +533,18 @@ bool ref_integrity_check_delete(Table* table, FilteredRow* rows_to_del_fr, bool 
     int data_index_referencing;
     int data_index_referenced;  
 
-    // check referential integrity looping all tables except the one to be deleted
     for(current_table=first_table; current_table!=NULL; current_table=current_table->next_table){
         if(strcmp(current_table->name, table->name) != 0){
             
-            // loop all cols of table to check
             for(current_col=current_table->first_col; current_col!=NULL; current_col=current_col->next_col){
                 if(current_col->constraint == FK && strcmp(current_col->refer_table, table->name) == 0){
                     data_index_referencing = get_data_list_index(current_table, current_col->name);
                     data_index_referenced = get_data_list_index(table, current_col->refer_col);
                     ht_check = get_ht_by_col_name(table->first_hash_table, current_col->refer_col);
 
-                    // loop all rows to check
                     for(current_row = current_table->first_row; current_row!=NULL; current_row=current_row->next_row){
                         if(current_col->type == INT){
-                            // SKIP NULL values - they can't violate referential integrity
+                             
                             if(!current_row->int_list[data_index_referencing]){
                                 continue;
                             }
@@ -634,12 +559,9 @@ bool ref_integrity_check_delete(Table* table, FilteredRow* rows_to_del_fr, bool 
                                     return false;
                                 }else{
                                     
-                                    // traverse rows to del and check if it contain the referencing value
                                     for(current_row_to_del=rows_to_del_fr; current_row_to_del!=NULL; current_row_to_del=current_row_to_del->next_filtered_row){
-                                        // Use the actual row pointer from FilteredRow
                                         row_to_check = current_row_to_del->row;
                                         
-                                        // SKIP if the row to delete has NULL in the referenced column
                                         if(!row_to_check->int_list[data_index_referenced]){
                                             continue;
                                         }
@@ -654,7 +576,6 @@ bool ref_integrity_check_delete(Table* table, FilteredRow* rows_to_del_fr, bool 
                                 }
                             } 
                         }else if(current_col->type == STRING){
-                            // SKIP NULL values - they can't violate referential integrity
                             if(!current_row->str_list[data_index_referencing]) continue;
                             
                             value_exist = exist_in_ht(ht_check, 0, current_row->str_list[data_index_referencing]);  
@@ -663,12 +584,9 @@ bool ref_integrity_check_delete(Table* table, FilteredRow* rows_to_del_fr, bool 
                                     fprintf(stderr, "Execution error: referential integrity violated, '%s' column is referenced by '%s' column of '%s' table.\n\n", current_col->refer_col, current_col->name, current_table->name);
                                     return false;
                                 }else{
-                                    // traverse rows to del and check if it contain the referencing value
                                     for(current_row_to_del=rows_to_del_fr; current_row_to_del!=NULL; current_row_to_del=current_row_to_del->next_filtered_row){
-                                        // Use the actual row pointer from FilteredRow
                                         row_to_check = current_row_to_del->row;
                                         
-                                        // SKIP if the row to delete has NULL in the referenced column
                                         if(!row_to_check->str_list[data_index_referenced]) continue;
                                         
                                         if(strcmp(current_row->str_list[data_index_referencing], row_to_check->str_list[data_index_referenced]) == 0){

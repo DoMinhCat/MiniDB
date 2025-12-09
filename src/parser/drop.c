@@ -18,21 +18,21 @@ void parse_drop(Query** query){
 
     (*query)->cmd_type = DROP;
 
-    // check TABLE
+     
     token = strtok(NULL, " \t");
     if(!contain_key_word(token, "TABLE", query, "DROP")) return;
 
-    // get table name to drop
-    table_list = strtok(NULL, "\n"); // got "tab1, tab2, tab3,..." 
+     
+    table_list = strtok(NULL, "\n");  
     if(!contain_param(table_list, query, "at least 1 table is required for DROP statement")) return;
 
     (*query)->params.drop_params.table_count = 0;
 
-    token = strtok(table_list, " ,\t"); // got "tab1"
+    token = strtok(table_list, " ,\t");  
     while(token != NULL){
         table_count = (*query)->params.drop_params.table_count;
 
-        // resize list and add table name to param
+         
         (*query)->params.drop_params.table_list = (char**)realloc((*query)->params.drop_params.table_list, (table_count+1) * sizeof(char*));
         assert((*query)->params.drop_params.table_list != NULL);
         (*query)->params.drop_params.table_list[table_count] = strdup(token);
@@ -42,5 +42,5 @@ void parse_drop(Query** query){
         token = strtok(NULL, " ,\t");
     }
     
-    // no need to check end_of_cmd here, that will be checked in db drop func, if extra iinput -> table doesn't exist
+     
 }

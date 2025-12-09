@@ -15,10 +15,10 @@ Group 2 ESGI 2A3
 #include "../../include/hash.h"
 
 FilteredRow* hash_lookup(HashTable* hash_table, int condition_int, char* condition_str){
-    // perform a hash look up to the hash table of pk/unique column and return linked list of FilteredRow (but 1 item only because hash table is for unique/pk col) for WHERE clause in SELECT
+     
 
     FilteredRow* result = init_filtered_row();
-    // do hash lookup and get the matching hash node
+     
     Node* hash_node = exist_in_ht(hash_table, condition_int, condition_str);
 
     if(hash_node){
@@ -29,7 +29,7 @@ FilteredRow* hash_lookup(HashTable* hash_table, int condition_int, char* conditi
 }
 
 FilteredRow* traverse_and_compare(Table* table, Col* condition_col, char* str_condition, double double_condition, int int_condition, ColType col_type){
-    // traverse rows and compare for WHERE clause, return the first node of the linked list FilteredRow
+     
 
     if(!table->first_row) return NULL;
     
@@ -60,12 +60,12 @@ FilteredRow* traverse_and_compare(Table* table, Col* condition_col, char* str_co
             (!check_with_null && current_row->double_list[data_list_index] && current_row->double_list[data_list_index][0] == double_condition)) should_add = true; 
             break;
         
-        default: // ain't gonna happen 
+        default:  
             return NULL;
             break;
         }
 
-        // set pointers
+         
         if(should_add){
             new_filtered_row = init_filtered_row();
             new_filtered_row->row = current_row;
@@ -74,7 +74,7 @@ FilteredRow* traverse_and_compare(Table* table, Col* condition_col, char* str_co
                 first_filtered_row = new_filtered_row;
                 last_filtered_row = first_filtered_row;
             } else {
-                // append to the end
+                 
                 last_filtered_row->next_filtered_row = new_filtered_row;
                 last_filtered_row = new_filtered_row;
             }
@@ -84,16 +84,16 @@ FilteredRow* traverse_and_compare(Table* table, Col* condition_col, char* str_co
 }
 
 FilteredRow* where_for_select(Table* table, Col* condition_col, char* str_condition, double double_condition, int int_condition, ColType col_type){
-    // SELECT db needs to convert condition value before passing to this func
-    // IMPORTANT, if type is not STRING then must pass NULL for str_condition
-    // IMPORTANT, if condition_col is NULL (comparing with NULL e,g. WHERE col1 = NULL), always pass "NULL" to str_condition regardless of col_type
+     
+     
+     
 
     FilteredRow* res = NULL;
     HashTable* ht_of_col = NULL;
     char* col_name = condition_col->name;
     bool check_with_null = strcasecmp("NULL", str_condition) == 0;
 
-    //check if condition col is indexed
+     
     ht_of_col = get_ht_by_col_name(table->first_hash_table, col_name);
 
     if(ht_of_col && !check_with_null){

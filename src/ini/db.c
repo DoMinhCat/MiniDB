@@ -10,13 +10,13 @@ Group 2 ESGI 2A3
 #include "../../include/ini.h"
 #include "../../include/db.h"
 
-// safely initialise Table struct
+ 
 Table* init_table(){
     Table* table = NULL;
 
     assert((table = (Table*)malloc(sizeof(Table))) != NULL);
     table->name = NULL;
-    table->first_row = NULL; // row will be init in insert.c
+    table->first_row = NULL;  
     table->first_col = init_col();
     table->next_table = NULL;
     table->first_hash_table = NULL;
