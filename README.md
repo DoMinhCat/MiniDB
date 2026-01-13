@@ -1,4 +1,4 @@
-# MiniDB – C Final Project (ESGI)
+# MiniDB – C Final Project
 
 A simplified **Relational Database Management System (SGBDR)** written entirely in **C**, implementing core database features such as table creation, insertion, selection, deletion, JOIN operations, and on-disk persistence.
 
